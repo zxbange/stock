@@ -133,6 +133,10 @@ html += """  </div>
         <button class="ptab" data-p="W" onclick="setPeriod('W')">周K</button>
         <button class="ptab" data-p="M" onclick="setPeriod('M')">月K</button>
       </div>
+      <div style="display:flex;gap:4px;margin-left:8px">
+        <button onclick="prevStock()" style="background:#252540;border:none;color:#888;cursor:pointer;padding:4px 10px;border-radius:4px;font-size:12px" title="上一只">&#x25C0;</button>
+        <button onclick="nextStock()" style="background:#252540;border:none;color:#888;cursor:pointer;padding:4px 10px;border-radius:4px;font-size:12px" title="下一只">&#x25B6;</button>
+      </div>
     </div>
     <div id="panes">
       <div class="pane" id="p1"><div class="pane-info" id="info1"></div></div>
@@ -152,8 +156,8 @@ var cd1 = null, vl = null, difL = null, deaL = null, macdB = null, kL = null, dL
 var _curCode = null, _curPeriod = 'D';
 var _sidebarCollapsed = false;
 
-var _maWindows = [5,10,20,30,60];
-var _maColors = {5:'#ffea00',10:'#ff9800',20:'#00bcd4',30:'#e040fb',60:'#00e676'};
+var _maWindows = [5,10,20,30,60,120,240];
+var _maColors = {5:'#ffea00',10:'#ff9800',20:'#00bcd4',30:'#e040fb',60:'#00e676',120:'#888888',240:'#666666'};
 var _maLines = {};
 
 function createCharts() {
@@ -180,8 +184,9 @@ function createCharts() {
   // MA lines on K线 chart
   _maWindows.forEach(function(n) {
     _maLines[n] = ch1.addLineSeries({
-      color: _maColors[n], lineWidth: 1,
-      priceLineVisible: false, lastValueVisible: false
+      color: _maColors[n], lineWidth: 0.5,
+      priceLineVisible: false, lastValueVisible: false,
+      opacity: 0.7
     });
   });
 
@@ -384,6 +389,22 @@ function setPeriod(p) {
 
 function toggleGroup(el) {
   el.nextElementSibling.classList.toggle('open');
+}
+
+function prevStock() { navigateStock(-1); }
+function nextStock() { navigateStock(+1); }
+function navigateStock(dir) {
+  var active = document.querySelector('.stk.active');
+  if (!active) return;
+  var group = active.parentElement;
+  var items = Array.from(group.querySelectorAll('.stk'));
+  var idx = items.indexOf(active);
+  var newIdx = (idx + dir + items.length) % items.length;
+  var next = items[newIdx];
+  if (next) {
+    next.click();
+    next.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
 }
 
 function toggleSidebar() {
