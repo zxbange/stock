@@ -71,7 +71,7 @@ html,body{{height:100%;overflow:hidden;background:#111}}
 .wrap{{display:flex;height:100vh;font-family:'PingFang SC','Microsoft YaHei',sans-serif}}
 
 /* 左侧栏 */
-.sidebar{{width:160px;background:#1a1a2e;border-right:1px solid #2a2a3e;overflow-y:auto;flex-shrink:0}}
+.sidebar{{width:160px;background:#1a1a2e;border-right:1px solid #2a2a3e;overflow-y:auto;flex-shrink:0;transition:width .25s}}.sidebar.collapsed{{width:0;overflow:hidden}}
 .sidebar h2{{font-size:13px;color:#888;padding:10px 12px 6px;font-weight:400}}
 .group{{margin-bottom:4px}}
 .ghdr{{padding:6px 12px;font-size:13px;color:#fff;cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center}}
@@ -130,6 +130,7 @@ html += """  </div>
 
   <div class="main">
     <div class="topbar">
+      <span id="sidebar-arrow" onclick="toggleSidebar()" style="cursor:pointer;font-size:16px;color:#888;margin-right:10px;flex-shrink:0" title="展开/收起侧栏">&#x25C0;</span>
       <div>
         <div class="stk-title" id="title-name">--</div>
         <div class="stk-sub" id="title-code">--</div>
@@ -275,6 +276,16 @@ function setPeriod(p) {
 function toggleGroup(el) {
   var stocks = el.nextElementSibling;
   stocks.classList.toggle('open');
+}
+var _sidebarCollapsed = false;
+function toggleSidebar() {
+  var sb = document.querySelector('.sidebar');
+  _sidebarCollapsed = !_sidebarCollapsed;
+  sb.classList.toggle('collapsed', _sidebarCollapsed);
+  // Update topbar arrow
+  var arrow = document.getElementById('sidebar-arrow');
+  if (arrow) arrow.innerHTML = _sidebarCollapsed ? '&#x25B6;' : '&#x25C0;';
+  setTimeout(function() { if (chart) chart.resize(document.getElementById('chart-wrap').clientWidth, document.getElementById('chart-wrap').clientHeight); }, 250);
 }
 
 // Init

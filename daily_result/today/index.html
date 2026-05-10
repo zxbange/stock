@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>K线精选 2026-05-10</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:#111}
+.wrap{display:flex;height:100vh;font-family:'PingFang SC','Microsoft YaHei',sans-serif}
+
+/* 左侧栏 */
+.sidebar{width:160px;background:#1a1a2e;border-right:1px solid #2a2a3e;overflow-y:auto;flex-shrink:0;transition:width .25s}.sidebar.collapsed{width:0;overflow:hidden}
+.sidebar h2{font-size:13px;color:#888;padding:10px 12px 6px;font-weight:400}
+.group{margin-bottom:4px}
+.ghdr{padding:6px 12px;font-size:13px;color:#fff;cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center}
+.ghdr:hover{background:#252540}
+.ghdr .gname{display:flex;align-items:center;gap:5px}
+.ghdr .gcnt{font-size:11px;color:#666;background:#252540;padding:1px 6px;border-radius:8px}
+.stocks{display:none;padding:2px 0}
+.stocks.open{display:block}
+.stk{padding:5px 12px 5px 28px;font-size:12px;color:#ccc;cursor:pointer;border-left:2px solid transparent}
+.stk:hover{background:#252540;color:#fff}
+.stk.active{background:#252540;color:#ffea00;border-left-color:#ffea00}
+.stk .sname{}
+.stk .scode{font-size:10px;color:#666;margin-top:1px}
+
+/* 右侧主区 */
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{background:#1a1a2e;border-bottom:1px solid #2a2a3e;padding:8px 14px;display:flex;align-items:center;gap:16px;flex-shrink:0}
+.stk-title{font-size:15px;color:#fff;font-weight:bold}
+.stk-sub{font-size:11px;color:#666;margin-top:2px}
+.period-tabs{display:flex;gap:3px;margin-left:auto}
+.ptab{padding:4px 14px;font-size:12px;color:#888;background:#252540;border:none;border-radius:4px;cursor:pointer}
+.ptab.active{background:#ffea00;color:#111;font-weight:bold}
+
+/* 图表区 */
+#chart-wrap{flex:1;position:relative;min-height:0}
+#loading{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#555;font-size:13px;display:none;z-index:10}
+#loading.show{display:block}
+#legend{position:absolute;top:8px;left:12px;z-index:5;font-size:11px;color:#aaa;pointer-events:none;line-height:1.8}
+#legend .row{margin-bottom:2px}
+#legend .label{color:#888}
+#legend .val{color:#fff;margin-left:4px}
+#legend .pct{margin-left:6px}
+#legend .pct.up{color:#ef5350}
+#legend .pct.dn{color:#26a69a}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="sidebar">
+    <h2>K线精选 · 129只</h2>
+<div class="group">
+<div class="ghdr" onclick="toggleGroup(this)"><span class="gname">📈 补票战法</span><span class="gcnt">5</span></div>
+<div class="stocks">
+<div class="stk" data-code="000955.SZ" onclick="selectStock(this,'000955.SZ')"><div class="sname">欣龙控股</div><div class="scode">000955.SZ</div></div>
+<div class="stk" data-code="001209.SZ" onclick="selectStock(this,'001209.SZ')"><div class="sname">洪兴股份</div><div class="scode">001209.SZ</div></div>
+<div class="stk" data-code="001231.SZ" onclick="selectStock(this,'001231.SZ')"><div class="sname">农心科技</div><div class="scode">001231.SZ</div></div>
+<div class="stk" data-code="002381.SZ" onclick="selectStock(this,'002381.SZ')"><div class="sname">双箭股份</div><div class="scode">002381.SZ</div></div>
+<div class="stk" data-code="600319.SH" onclick="selectStock(this,'600319.SH')"><div class="sname">亚星化学</div><div class="scode">600319.SH</div></div>
+</div>
+</div>
+<div class="group">
+<div class="ghdr" onclick="toggleGroup(this)"><span class="gname">📊 TePu战法</span><span class="gcnt">2</span></div>
+<div class="stocks">
+<div class="stk" data-code="601997.SH" onclick="selectStock(this,'601997.SH')"><div class="sname">贵阳银行</div><div class="scode">601997.SH</div></div>
+<div class="stk" data-code="605098.SH" onclick="selectStock(this,'605098.SH')"><div class="sname">行动教育</div><div class="scode">605098.SH</div></div>
+</div>
+</div>
+<div class="group">
+<div class="ghdr" onclick="toggleGroup(this)"><span class="gname">🕳️ 填坑战法</span><span class="gcnt">5</span></div>
+<div class="stocks">
+<div class="stk" data-code="002454.SZ" onclick="selectStock(this,'002454.SZ')"><div class="sname">松芝股份</div><div class="scode">002454.SZ</div></div>
+<div class="stk" data-code="300858.SZ" onclick="selectStock(this,'300858.SZ')"><div class="sname">科拓生物</div><div class="scode">300858.SZ</div></div>
+<div class="stk" data-code="301667.SZ" onclick="selectStock(this,'301667.SZ')"><div class="sname">纳百川</div><div class="scode">301667.SZ</div></div>
+<div class="stk" data-code="601677.SH" onclick="selectStock(this,'601677.SH')"><div class="sname">明泰铝业</div><div class="scode">601677.SH</div></div>
+<div class="stk" data-code="603655.SH" onclick="selectStock(this,'603655.SH')"><div class="sname">朗博科技</div><div class="scode">603655.SH</div></div>
+</div>
+</div>
+<div class="group">
+<div class="ghdr" onclick="toggleGroup(this)"><span class="gname">🌊 大波浪战法</span><span class="gcnt">22</span></div>
+<div class="stocks">
+<div class="stk" data-code="000155.SZ" onclick="selectStock(this,'000155.SZ')"><div class="sname">川能动力</div><div class="scode">000155.SZ</div></div>
+<div class="stk" data-code="000967.SZ" onclick="selectStock(this,'000967.SZ')"><div class="sname">盈峰环境</div><div class="scode">000967.SZ</div></div>
+<div class="stk" data-code="002281.SZ" onclick="selectStock(this,'002281.SZ')"><div class="sname">光迅科技</div><div class="scode">002281.SZ</div></div>
+<div class="stk" data-code="002384.SZ" onclick="selectStock(this,'002384.SZ')"><div class="sname">东山精密</div><div class="scode">002384.SZ</div></div>
+<div class="stk" data-code="002491.SZ" onclick="selectStock(this,'002491.SZ')"><div class="sname">通鼎互联</div><div class="scode">002491.SZ</div></div>
+<div class="stk" data-code="002831.SZ" onclick="selectStock(this,'002831.SZ')"><div class="sname">裕同科技</div><div class="scode">002831.SZ</div></div>
+<div class="stk" data-code="300054.SZ" onclick="selectStock(this,'300054.SZ')"><div class="sname">鼎龙股份</div><div class="scode">300054.SZ</div></div>
+<div class="stk" data-code="300857.SZ" onclick="selectStock(this,'300857.SZ')"><div class="sname">协创数据</div><div class="scode">300857.SZ</div></div>
+<div class="stk" data-code="600176.SH" onclick="selectStock(this,'600176.SH')"><div class="sname">中国巨石</div><div class="scode">600176.SH</div></div>
+<div class="stk" data-code="600233.SH" onclick="selectStock(this,'600233.SH')"><div class="sname">圆通速递</div><div class="scode">600233.SH</div></div>
+<div class="stk" data-code="600236.SH" onclick="selectStock(this,'600236.SH')"><div class="sname">桂冠电力</div><div class="scode">600236.SH</div></div>
+<div class="stk" data-code="600522.SH" onclick="selectStock(this,'600522.SH')"><div class="sname">中天科技</div><div class="scode">600522.SH</div></div>
+<div class="stk" data-code="600773.SH" onclick="selectStock(this,'600773.SH')"><div class="sname">西藏城投</div><div class="scode">600773.SH</div></div>
+<div class="stk" data-code="600777.SH" onclick="selectStock(this,'600777.SH')"><div class="sname">*ST新潮</div><div class="scode">600777.SH</div></div>
+<div class="stk" data-code="601778.SH" onclick="selectStock(this,'601778.SH')"><div class="sname">晶科科技</div><div class="scode">601778.SH</div></div>
+<div class="stk" data-code="603659.SH" onclick="selectStock(this,'603659.SH')"><div class="sname">璞泰来</div><div class="scode">603659.SH</div></div>
+<div class="stk" data-code="603688.SH" onclick="selectStock(this,'603688.SH')"><div class="sname">石英股份</div><div class="scode">603688.SH</div></div>
+<div class="stk" data-code="605117.SH" onclick="selectStock(this,'605117.SH')"><div class="sname">德业股份</div><div class="scode">605117.SH</div></div>
+<div class="stk" data-code="688025.SH" onclick="selectStock(this,'688025.SH')"><div class="sname">杰普特</div><div class="scode">688025.SH</div></div>
+<div class="stk" data-code="688525.SH" onclick="selectStock(this,'688525.SH')"><div class="sname">佰维存储</div><div class="scode">688525.SH</div></div>
+<div class="stk" data-code="688629.SH" onclick="selectStock(this,'688629.SH')"><div class="sname">华丰科技</div><div class="scode">688629.SH</div></div>
+<div class="stk" data-code="688702.SH" onclick="selectStock(this,'688702.SH')"><div class="sname">盛科通信-U</div><div class="scode">688702.SH</div></div>
+</div>
+</div>
+<div class="group">
+<div class="ghdr" onclick="toggleGroup(this)"><span class="gname">🔴 红悬停战法</span><span class="gcnt">28</span></div>
+<div class="stocks">
+<div class="stk" data-code="000066.SZ" onclick="selectStock(this,'000066.SZ')"><div class="sname">中国长城</div><div class="scode">000066.SZ</div></div>
+<div class="stk" data-code="688069.SH" onclick="selectStock(this,'688069.SH')"><div class="sname">德林海</div><div class="scode">688069.SH</div></div>
+<div class="stk" data-code="603936.SH" onclick="selectStock(this,'603936.SH')"><div class="sname">博敏电子</div><div class="scode">603936.SH</div></div>
+<div class="stk" data-code="001309.SZ" onclick="selectStock(this,'001309.SZ')"><div class="sname">德明利</div><div class="scode">001309.SZ</div></div>
+<div class="stk" data-code="000815.SZ" onclick="selectStock(this,'000815.SZ')"><div class="sname">美利云</div><div class="scode">000815.SZ</div></div>
+<div class="stk" data-code="000060.SZ" onclick="selectStock(this,'000060.SZ')"><div class="sname">中金岭南</div><div class="scode">000060.SZ</div></div>
+<div class="stk" data-code="002903.SZ" onclick="selectStock(this,'002903.SZ')"><div class="sname">宇环数控</div><div class="scode">002903.SZ</div></div>
+<div class="stk" data-code="603248.SH" onclick="selectStock(this,'603248.SH')"><div class="sname">锡华科技</div><div class="scode">603248.SH</div></div>
+<div class="stk" data-code="603269.SH" onclick="selectStock(this,'603269.SH')"><div class="sname">海鸥股份</div><div class="scode">603269.SH</div></div>
+<div class="stk" data-code="002787.SZ" onclick="selectStock(this,'002787.SZ')"><div class="sname">华源控股</div><div class="scode">002787.SZ</div></div>
+<div class="stk" data-code="603256.SH" onclick="selectStock(this,'603256.SH')"><div class="sname">宏和科技</div><div class="scode">603256.SH</div></div>
+<div class="stk" data-code="002272.SZ" onclick="selectStock(this,'002272.SZ')"><div class="sname">川润股份</div><div class="scode">002272.SZ</div></div>
+<div class="stk" data-code="002149.SZ" onclick="selectStock(this,'002149.SZ')"><div class="sname">西部材料</div><div class="scode">002149.SZ</div></div>
+<div class="stk" data-code="601016.SH" onclick="selectStock(this,'601016.SH')"><div class="sname">节能风电</div><div class="scode">601016.SH</div></div>
+<div class="stk" data-code="600673.SH" onclick="selectStock(this,'600673.SH')"><div class="sname">东阳光</div><div class="scode">600673.SH</div></div>
+<div class="stk" data-code="603001.SH" onclick="selectStock(this,'603001.SH')"><div class="sname">奥康国际</div><div class="scode">603001.SH</div></div>
+<div class="stk" data-code="300042.SZ" onclick="selectStock(this,'300042.SZ')"><div class="sname">朗科科技</div><div class="scode">300042.SZ</div></div>
+<div class="stk" data-code="600301.SH" onclick="selectStock(this,'600301.SH')"><div class="sname">华锡有色</div><div class="scode">600301.SH</div></div>
+<div class="stk" data-code="002217.SZ" onclick="selectStock(this,'002217.SZ')"><div class="sname">合力泰</div><div class="scode">002217.SZ</div></div>
+<div class="stk" data-code="002015.SZ" onclick="selectStock(this,'002015.SZ')"><div class="sname">协鑫能科</div><div class="scode">002015.SZ</div></div>
+<div class="stk" data-code="601778.SH" onclick="selectStock(this,'601778.SH')"><div class="sname">晶科科技</div><div class="scode">601778.SH</div></div>
+<div class="stk" data-code="600719.SH" onclick="selectStock(this,'600719.SH')"><div class="sname">大连热电</div><div class="scode">600719.SH</div></div>
+<div class="stk" data-code="603063.SH" onclick="selectStock(this,'603063.SH')"><div class="sname">禾望电气</div><div class="scode">603063.SH</div></div>
+<div class="stk" data-code="000802.SZ" onclick="selectStock(this,'000802.SZ')"><div class="sname">北京文化</div><div class="scode">000802.SZ</div></div>
+<div class="stk" data-code="000818.SZ" onclick="selectStock(this,'000818.SZ')"><div class="sname">航锦科技</div><div class="scode">000818.SZ</div></div>
+<div class="stk" data-code="600396.SH" onclick="selectStock(this,'600396.SH')"><div class="sname">华电辽能</div><div class="scode">600396.SH</div></div>
+<div class="stk" data-code="000889.SZ" onclick="selectStock(this,'000889.SZ')"><div class="sname">中嘉博创</div><div class="scode">000889.SZ</div></div>
+<div class="stk" data-code="603158.SH" onclick="selectStock(this,'603158.SH')"><div class="sname">腾龙股份</div><div class="scode">603158.SH</div></div>
+</div>
+</div>
+<div class="group">
+<div class="ghdr" onclick="toggleGroup(this)"><span class="gname">💰 业绩稳增战法</span><span class="gcnt">67</span></div>
+<div class="stocks">
+<div class="stk" data-code="603256.SH" onclick="selectStock(this,'603256.SH')"><div class="sname">宏和科技</div><div class="scode">603256.SH</div></div>
+<div class="stk" data-code="688313.SH" onclick="selectStock(this,'688313.SH')"><div class="sname">仕佳光子</div><div class="scode">688313.SH</div></div>
+<div class="stk" data-code="300473.SZ" onclick="selectStock(this,'300473.SZ')"><div class="sname">德尔股份</div><div class="scode">300473.SZ</div></div>
+<div class="stk" data-code="600610.SH" onclick="selectStock(this,'600610.SH')"><div class="sname">中毅达</div><div class="scode">600610.SH</div></div>
+<div class="stk" data-code="002602.SZ" onclick="selectStock(this,'002602.SZ')"><div class="sname">世纪华通</div><div class="scode">002602.SZ</div></div>
+<div class="stk" data-code="688519.SH" onclick="selectStock(this,'688519.SH')"><div class="sname">南亚新材</div><div class="scode">688519.SH</div></div>
+<div class="stk" data-code="300975.SZ" onclick="selectStock(this,'300975.SZ')"><div class="sname">商络电子</div><div class="scode">300975.SZ</div></div>
+<div class="stk" data-code="688183.SH" onclick="selectStock(this,'688183.SH')"><div class="sname">生益电子</div><div class="scode">688183.SH</div></div>
+<div class="stk" data-code="301356.SZ" onclick="selectStock(this,'301356.SZ')"><div class="sname">天振股份</div><div class="scode">301356.SZ</div></div>
+<div class="stk" data-code="000600.SZ" onclick="selectStock(this,'000600.SZ')"><div class="sname">建投能源</div><div class="scode">000600.SZ</div></div>
+<div class="stk" data-code="688322.SH" onclick="selectStock(this,'688322.SH')"><div class="sname">奥比中光-W</div><div class="scode">688322.SH</div></div>
+<div class="stk" data-code="300972.SZ" onclick="selectStock(this,'300972.SZ')"><div class="sname">万辰集团</div><div class="scode">300972.SZ</div></div>
+<div class="stk" data-code="300476.SZ" onclick="selectStock(this,'300476.SZ')"><div class="sname">胜宏科技</div><div class="scode">300476.SZ</div></div>
+<div class="stk" data-code="600366.SH" onclick="selectStock(this,'600366.SH')"><div class="sname">宁波韵升</div><div class="scode">600366.SH</div></div>
+<div class="stk" data-code="300502.SZ" onclick="selectStock(this,'300502.SZ')"><div class="sname">新易盛</div><div class="scode">300502.SZ</div></div>
+<div class="stk" data-code="300409.SZ" onclick="selectStock(this,'300409.SZ')"><div class="sname">道氏技术</div><div class="scode">300409.SZ</div></div>
+<div class="stk" data-code="300132.SZ" onclick="selectStock(this,'300132.SZ')"><div class="sname">青松股份</div><div class="scode">300132.SZ</div></div>
+<div class="stk" data-code="301200.SZ" onclick="selectStock(this,'301200.SZ')"><div class="sname">大族数控</div><div class="scode">301200.SZ</div></div>
+<div class="stk" data-code="603379.SH" onclick="selectStock(this,'603379.SH')"><div class="sname">三美股份</div><div class="scode">603379.SH</div></div>
+<div class="stk" data-code="601798.SH" onclick="selectStock(this,'601798.SH')"><div class="sname">蓝科高新</div><div class="scode">601798.SH</div></div>
+<div class="stk" data-code="688213.SH" onclick="selectStock(this,'688213.SH')"><div class="sname">思特威-W</div><div class="scode">688213.SH</div></div>
+<div class="stk" data-code="002741.SZ" onclick="selectStock(this,'002741.SZ')"><div class="sname">光华科技</div><div class="scode">002741.SZ</div></div>
+<div class="stk" data-code="605376.SH" onclick="selectStock(this,'605376.SH')"><div class="sname">博迁新材</div><div class="scode">605376.SH</div></div>
+<div class="stk" data-code="600685.SH" onclick="selectStock(this,'600685.SH')"><div class="sname">中船防务</div><div class="scode">600685.SH</div></div>
+<div class="stk" data-code="300249.SZ" onclick="selectStock(this,'300249.SZ')"><div class="sname">依米康</div><div class="scode">300249.SZ</div></div>
+<div class="stk" data-code="002928.SZ" onclick="selectStock(this,'002928.SZ')"><div class="sname">华夏航空</div><div class="scode">002928.SZ</div></div>
+<div class="stk" data-code="002284.SZ" onclick="selectStock(this,'002284.SZ')"><div class="sname">亚太股份</div><div class="scode">002284.SZ</div></div>
+<div class="stk" data-code="600338.SH" onclick="selectStock(this,'600338.SH')"><div class="sname">西藏珠峰</div><div class="scode">600338.SH</div></div>
+<div class="stk" data-code="300221.SZ" onclick="selectStock(this,'300221.SZ')"><div class="sname">银禧科技</div><div class="scode">300221.SZ</div></div>
+<div class="stk" data-code="688222.SH" onclick="selectStock(this,'688222.SH')"><div class="sname">成都先导</div><div class="scode">688222.SH</div></div>
+<div class="stk" data-code="002748.SZ" onclick="selectStock(this,'002748.SZ')"><div class="sname">世龙实业</div><div class="scode">002748.SZ</div></div>
+<div class="stk" data-code="300199.SZ" onclick="selectStock(this,'300199.SZ')"><div class="sname">翰宇药业</div><div class="scode">300199.SZ</div></div>
+<div class="stk" data-code="600686.SH" onclick="selectStock(this,'600686.SH')"><div class="sname">金龙汽车</div><div class="scode">600686.SH</div></div>
+<div class="stk" data-code="600183.SH" onclick="selectStock(this,'600183.SH')"><div class="sname">生益科技</div><div class="scode">600183.SH</div></div>
+<div class="stk" data-code="300602.SZ" onclick="selectStock(this,'300602.SZ')"><div class="sname">飞荣达</div><div class="scode">300602.SZ</div></div>
+<div class="stk" data-code="600160.SH" onclick="selectStock(this,'600160.SH')"><div class="sname">巨化股份</div><div class="scode">600160.SH</div></div>
+<div class="stk" data-code="600550.SH" onclick="selectStock(this,'600550.SH')"><div class="sname">保变电气</div><div class="scode">600550.SH</div></div>
+<div class="stk" data-code="301183.SZ" onclick="selectStock(this,'301183.SZ')"><div class="sname">东田微</div><div class="scode">301183.SZ</div></div>
+<div class="stk" data-code="688127.SH" onclick="selectStock(this,'688127.SH')"><div class="sname">蓝特光学</div><div class="scode">688127.SH</div></div>
+<div class="stk" data-code="603893.SH" onclick="selectStock(this,'603893.SH')"><div class="sname">瑞芯微</div><div class="scode">603893.SH</div></div>
+<div class="stk" data-code="600988.SH" onclick="selectStock(this,'600988.SH')"><div class="sname">赤峰黄金</div><div class="scode">600988.SH</div></div>
+<div class="stk" data-code="000833.SZ" onclick="selectStock(this,'000833.SZ')"><div class="sname">粤桂股份</div><div class="scode">000833.SZ</div></div>
+<div class="stk" data-code="002755.SZ" onclick="selectStock(this,'002755.SZ')"><div class="sname">奥赛康</div><div class="scode">002755.SZ</div></div>
+<div class="stk" data-code="002901.SZ" onclick="selectStock(this,'002901.SZ')"><div class="sname">大博医疗</div><div class="scode">002901.SZ</div></div>
+<div class="stk" data-code="603890.SH" onclick="selectStock(this,'603890.SH')"><div class="sname">春秋电子</div><div class="scode">603890.SH</div></div>
+<div class="stk" data-code="601899.SH" onclick="selectStock(this,'601899.SH')"><div class="sname">紫金矿业</div><div class="scode">601899.SH</div></div>
+<div class="stk" data-code="600186.SH" onclick="selectStock(this,'600186.SH')"><div class="sname">莲花控股</div><div class="scode">600186.SH</div></div>
+<div class="stk" data-code="688008.SH" onclick="selectStock(this,'688008.SH')"><div class="sname">澜起科技</div><div class="scode">688008.SH</div></div>
+<div class="stk" data-code="603993.SH" onclick="selectStock(this,'603993.SH')"><div class="sname">洛阳钼业</div><div class="scode">603993.SH</div></div>
+<div class="stk" data-code="688681.SH" onclick="selectStock(this,'688681.SH')"><div class="sname">科汇股份</div><div class="scode">688681.SH</div></div>
+<div class="stk" data-code="000554.SZ" onclick="selectStock(this,'000554.SZ')"><div class="sname">泰山石油</div><div class="scode">000554.SZ</div></div>
+<div class="stk" data-code="688578.SH" onclick="selectStock(this,'688578.SH')"><div class="sname">艾力斯</div><div class="scode">688578.SH</div></div>
+<div class="stk" data-code="000729.SZ" onclick="selectStock(this,'000729.SZ')"><div class="sname">燕京啤酒</div><div class="scode">000729.SZ</div></div>
+<div class="stk" data-code="600547.SH" onclick="selectStock(this,'600547.SH')"><div class="sname">山东黄金</div><div class="scode">600547.SH</div></div>
+<div class="stk" data-code="002463.SZ" onclick="selectStock(this,'002463.SZ')"><div class="sname">沪电股份</div><div class="scode">002463.SZ</div></div>
+<div class="stk" data-code="601991.SH" onclick="selectStock(this,'601991.SH')"><div class="sname">大唐发电</div><div class="scode">601991.SH</div></div>
+<div class="stk" data-code="002245.SZ" onclick="selectStock(this,'002245.SZ')"><div class="sname">蔚蓝锂芯</div><div class="scode">002245.SZ</div></div>
+<div class="stk" data-code="000957.SZ" onclick="selectStock(this,'000957.SZ')"><div class="sname">中通客车</div><div class="scode">000957.SZ</div></div>
+<div class="stk" data-code="688209.SH" onclick="selectStock(this,'688209.SH')"><div class="sname">英集芯</div><div class="scode">688209.SH</div></div>
+<div class="stk" data-code="603979.SH" onclick="selectStock(this,'603979.SH')"><div class="sname">金诚信</div><div class="scode">603979.SH</div></div>
+<div class="stk" data-code="603699.SH" onclick="selectStock(this,'603699.SH')"><div class="sname">纽威股份</div><div class="scode">603699.SH</div></div>
+<div class="stk" data-code="000975.SZ" onclick="selectStock(this,'000975.SZ')"><div class="sname">山金国际</div><div class="scode">000975.SZ</div></div>
+<div class="stk" data-code="688041.SH" onclick="selectStock(this,'688041.SH')"><div class="sname">海光信息</div><div class="scode">688041.SH</div></div>
+<div class="stk" data-code="003026.SZ" onclick="selectStock(this,'003026.SZ')"><div class="sname">中晶科技</div><div class="scode">003026.SZ</div></div>
+<div class="stk" data-code="001339.SZ" onclick="selectStock(this,'001339.SZ')"><div class="sname">智微智能</div><div class="scode">001339.SZ</div></div>
+<div class="stk" data-code="300054.SZ" onclick="selectStock(this,'300054.SZ')"><div class="sname">鼎龙股份</div><div class="scode">300054.SZ</div></div>
+<div class="stk" data-code="600573.SH" onclick="selectStock(this,'600573.SH')"><div class="sname">惠泉啤酒</div><div class="scode">600573.SH</div></div>
+</div>
+</div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <span id="sidebar-arrow" onclick="toggleSidebar()" style="cursor:pointer;font-size:16px;color:#888;margin-right:10px;flex-shrink:0" title="展开/收起侧栏">&#x25C0;</span>
+      <div>
+        <div class="stk-title" id="title-name">--</div>
+        <div class="stk-sub" id="title-code">--</div>
+      </div>
+      <div class="period-tabs">
+        <button class="ptab active" data-p="D" onclick="setPeriod('D')">日K</button>
+        <button class="ptab" data-p="W" onclick="setPeriod('W')">周K</button>
+        <button class="ptab" data-p="M" onclick="setPeriod('M')">月K</button>
+      </div>
+    </div>
+    <div id="chart-wrap">
+      <div id="loading">加载中...</div>
+      <div id="legend"></div>
+      <div id="chart" style="width:100%;height:100%"></div>
+    </div>
+  </div>
+</div>
+<script src="lightweight-charts.standalone.production.js"></script>
+<script>
+var chart = null;
+var candlestickSeries = null;
+var volSeries = null;
+var maSeries = {};
+var _curCode = null;
+var _curPeriod = 'D';
+var _maWindows = [5,10,20,30,60];
+var _maColors = {5:'#ffea00',10:'#ff9800',20:'#00bcd4',30:'#e040fb',60:'#00e676'};
+
+function initChart() {
+  if (chart) { chart.remove(); chart = null; }
+  var wrap = document.getElementById('chart-wrap');
+  var h = wrap.clientHeight;
+  var w = wrap.clientWidth;
+  chart = LightweightCharts.createChart(document.getElementById('chart'), {
+    width: w, height: h,
+    layout: { background: { color: '#111122' }, textColor: '#888' },
+    grid: { vertLines: { color: '#1e1e2e' }, horzLines: { color: '#1e1e2e' } },
+    rightPriceScale: { borderVisible: false },
+    timeScale: { borderVisible: false, timeVisible: true },
+    crosshair: { mode: LightweightCharts.CrosshairMode.Normal }
+  });
+  candlestickSeries = chart.addCandlestickSeries({
+    upColor: '#ef5350', downColor: '#26a69a',
+    borderUpColor: '#ef5350', borderDownColor: '#26a69a',
+    wickUpColor: '#ef5350', wickDownColor: '#26a69a'
+  });
+  volSeries = chart.addHistogramSeries({
+    priceFormat: { type: 'volume' },
+    priceScaleId: 'vol'
+  });
+  chart.priceScale('vol').applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
+  _maWindows.forEach(function(n) {
+    maSeries[n] = chart.addLineSeries({ color: _maColors[n], lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
+  });
+  // Resize listener
+  window.addEventListener('resize', function() {
+    if (chart) chart.resize(document.getElementById('chart-wrap').clientWidth, document.getElementById('chart-wrap').clientHeight);
+  });
+}
+
+function loadData(code, period) {
+  var file = period === 'D' ? code + '.json' : code + '_' + period.toLowerCase() + '.json';
+  document.getElementById('loading').classList.add('show');
+  fetch('indicators/' + file).then(function(r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }).then(function(data) {
+    document.getElementById('loading').classList.remove('show');
+    var rows = data.kline || data.rows;
+    var ind = data.ind || data.indicators;
+    if (!rows || !ind) { alert('数据格式错误'); return; }
+    render(rows, ind, period);
+  }).catch(function(e) {
+    document.getElementById('loading').classList.remove('show');
+    alert('加载失败: ' + e.message);
+  });
+}
+
+function render(rows, ind, period) {
+  // Update legend
+  var last = rows[rows.length - 1];
+  var prev = rows[rows.length - 2] || last;
+  var pct = ((last.c - prev.c) / prev.c * 100);
+  var pctStr = (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%';
+  var pctCls = pct >= 0 ? 'up' : 'dn';
+  var leg = '<div class="row"><span class="label">收盘</span><span class="val">' + last.c.toFixed(2) + '</span>' +
+    '<span class="pct ' + pctCls + '">' + pctStr + ' (涨幅)</span></div>';
+  leg += '<div class="row"><span class="label">开盘</span><span class="val">' + last.o.toFixed(2) + '</span>' +
+    '<span class="label" style="margin-left:10px">高</span><span class="val">' + last.h.toFixed(2) + '</span>' +
+    '<span class="label" style="margin-left:10px">低</span><span class="val">' + last.l.toFixed(2) + '</span></div>';
+  // MA values
+  var maRows = [
+    ['MA5', ind.ma5], ['MA10', ind.ma10], ['MA20', ind.ma20],
+    ['MA30', ind.ma30], ['MA60', ind.ma60]
+  ];
+  maRows.forEach(function(m) {
+    var v = m[1][rows.length - 1];
+    if (v != null) {
+      leg += '<div class="row"><span class="label" style="color:' + _maColors[m[0]] + '">' + m[0] + '</span><span class="val">' + v.toFixed(2) + '</span></div>';
+    }
+  });
+  document.getElementById('legend').innerHTML = leg;
+
+  // Set candlestick data
+  candlestickSeries.setData(rows.map(function(r) {
+    return { time: r.time, open: r.o, high: r.h, low: r.l, close: r.c };
+  }));
+  // Volume
+  volSeries.setData(rows.map(function(r) {
+    return { time: r.time, value: r.v, color: r.c >= r.o ? '#ef535066' : '#26a69a66' };
+  }));
+  // MA lines
+  _maWindows.forEach(function(n) {
+    var key = 'ma' + n;
+    if (ind[key]) {
+      maSeries[n].setData(rows.map(function(r, i) {
+        return { time: r.time, value: ind[key][i] };
+      }).filter(function(d) { return d.value != null; }));
+    }
+  });
+  chart.timeScale().fitContent();
+}
+
+function selectStock(el, code) {
+  document.querySelectorAll('.stk').forEach(function(s) { s.classList.remove('active'); });
+  el.classList.add('active');
+  _curCode = code;
+  var name = el.querySelector('.sname').textContent;
+  var code2 = el.querySelector('.scode').textContent;
+  document.getElementById('title-name').textContent = name;
+  document.getElementById('title-code').textContent = code2;
+  loadData(code, _curPeriod);
+}
+
+function setPeriod(p) {
+  _curPeriod = p;
+  document.querySelectorAll('.ptab').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.p === p);
+  });
+  if (_curCode) loadData(_curCode, p);
+}
+
+function toggleGroup(el) {
+  var stocks = el.nextElementSibling;
+  stocks.classList.toggle('open');
+}
+var _sidebarCollapsed = false;
+function toggleSidebar() {
+  var sb = document.querySelector('.sidebar');
+  _sidebarCollapsed = !_sidebarCollapsed;
+  sb.classList.toggle('collapsed', _sidebarCollapsed);
+  // Update topbar arrow
+  var arrow = document.getElementById('sidebar-arrow');
+  if (arrow) arrow.innerHTML = _sidebarCollapsed ? '&#x25B6;' : '&#x25C0;';
+  setTimeout(function() { if (chart) chart.resize(document.getElementById('chart-wrap').clientWidth, document.getElementById('chart-wrap').clientHeight); }, 250);
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', function() {
+  initChart();
+  // Auto-open first group
+  var firstGroup = document.querySelector('.stocks');
+  if (firstGroup) firstGroup.classList.add('open');
+  // Select first stock
+  var firstStk = document.querySelector('.stk');
+  if (firstStk) {
+    selectStock(firstStk, firstStk.dataset.code);
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,202 @@
+#!/usr/bin/env python3
+"""生成K线图 - 从today/result_*.txt读取股票列表"""
+import os, re, shutil
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+today_dir = PROJECT_ROOT / 'daily_result' / 'today'
+today_dir.mkdir(parents=True, exist_ok=True)
+
+# ============================================================
+# K线图生成核心函数
+# ============================================================
+def generate_chart(code, periods=700, strategy_name=None, stock_name=None):
+    """生成单支股票的K线图（日式蜡烛图 + 均线 + MACD + KDJ）"""
+    try:
+        import pandas as pd
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+        import numpy as np
+
+        data_path = PROJECT_ROOT / "data_kline" / f"{code}.csv"
+        if not os.path.exists(data_path):
+            return None
+
+        df = pd.read_csv(data_path)
+        if df.empty or len(df) < 5:
+            return None
+
+        df['date'] = pd.to_datetime(df['date'])
+        df = df.sort_values('date').reset_index(drop=True)
+
+        close_full = df['close'].values
+        open_full  = df['open'].values
+        high_full  = df['high'].values
+        low_full   = df['low'].values
+
+        # 均线：先在完整历史上算，再截断
+        ma_data = {}
+        for period, color, label in [
+            (5,'yellow','MA5'),(10,'orange','MA10'),(20,'cyan','MA20'),
+            (30,'magenta','MA30'),(60,'lime','MA60'),(120,'gold','MA120'),(240,'violet','MA240')
+        ]:
+            if len(df) >= period:
+                ma_data[period] = pd.Series(close_full).rolling(period).mean().values
+
+        df = df.tail(periods).reset_index(drop=True)
+        close = close_full[-periods:]
+        open_v = open_full[-periods:]
+        high  = high_full[-periods:]
+        low   = low_full[-periods:]
+        for p in list(ma_data.keys()):
+            ma_data[p] = ma_data[p][-periods:]
+
+        # MACD
+        ema12 = pd.Series(close).ewm(span=12).mean().values
+        ema26 = pd.Series(close).ewm(span=26).mean().values
+        dif   = ema12 - ema26
+        dea   = pd.Series(dif).ewm(span=9).mean().values
+        macd  = 2 * (dif - dea)
+
+        # KDJ
+        n = 9
+        low_n  = pd.Series(low).rolling(n).min().values
+        high_n = pd.Series(high).rolling(n).max().values
+        rsv = (close - low_n) / (high_n - low_n + 1e-9) * 100
+        rsv = np.nan_to_num(rsv, nan=0.5)
+        K = np.zeros_like(close)
+        D = np.zeros_like(close)
+        K[0], D[0] = 50, 50
+        for i in range(1, len(close)):
+            K[i] = 2/3 * K[i-1] + 1/3 * rsv[i]
+            D[i] = 2/3 * D[i-1] + 1/3 * K[i]
+        J = 3 * K - 2 * D
+
+        matplotlib.rcParams['font.sans-serif'] = ['Noto Sans CJK JP', 'DejaVu Sans']
+        matplotlib.rcParams['axes.unicode_minus'] = False
+
+        up   = close >= open_v
+        down = ~up
+        x    = list(range(len(df)))
+
+        fig = plt.figure(figsize=(30, 20), facecolor='white')
+        gs  = fig.add_gridspec(4, 1, height_ratios=[4, 1.2, 1.5, 1.5],
+                               hspace=0.06, left=0.06, right=0.96, top=0.94, bottom=0.05)
+        ax1    = fig.add_subplot(gs[0])
+        ax_vol = fig.add_subplot(gs[1], sharex=ax1)
+        ax_macd= fig.add_subplot(gs[2], sharex=ax1)
+        ax_kdj = fig.add_subplot(gs[3], sharex=ax1)
+
+        for ax in [ax1, ax_vol, ax_macd, ax_kdj]:
+            ax.set_facecolor('white')
+            ax.tick_params(colors='black', labelcolor='black')
+            for spine in ['bottom','top','left','right']:
+                ax.spines[spine].set_color('#999')
+            ax.grid(axis='y', color='#ccc', linewidth=0.4)
+
+        w = 0.85
+        for i in x:
+            color = 'red' if up[i] else 'green'
+            body_top = max(open_v[i], close[i])
+            body_bot = min(open_v[i], close[i])
+            body_h   = max(body_top - body_bot, 0.001)
+            if color == 'red':
+                ax1.plot([i,i], [low[i], body_bot], color='red', linewidth=0.8)
+                ax1.plot([i,i], [body_top, high[i]], color='red', linewidth=0.8)
+                ax1.add_patch(plt.Rectangle((i-w/2, body_bot), w, body_h,
+                                 facecolor='none', edgecolor='red', linewidth=0.8))
+            else:
+                ax1.plot([i,i], [low[i], high[i]], color='green', linewidth=0.8)
+                ax1.add_patch(plt.Rectangle((i-w/2, body_bot), w, body_h,
+                                 facecolor='green', edgecolor='green', linewidth=0.8))
+
+        def add_ma(p, c, lbl, lw=0.4):
+            if p in ma_data:
+                ax1.plot(x, ma_data[p], color=c, linewidth=lw, label=lbl)
+        add_ma(5,'yellow','MA5');  add_ma(10,'orange','MA10'); add_ma(20,'cyan','MA20')
+        add_ma(30,'magenta','MA30'); add_ma(60,'lime','MA60');  add_ma(120,'gold','MA120')
+        add_ma(240,'violet','MA240')
+        ax1.legend(loc='upper left', facecolor='#f0f0f0', labelcolor='black',
+                   fontsize=8, ncol=4, framealpha=0.6)
+        ax1.set_ylabel("Price", color='black', fontsize=9)
+        title = f"{strategy_name}: {stock_name or code} ({code})" if strategy_name else f"{stock_name or code} ({code})"
+        ax1.set_title(title, color='black', fontsize=13, pad=10)
+
+        vol = df['volume'].values
+        if vol.mean() > 10000:
+            vol = vol / 10000
+        ax_vol.bar([i for i in x if up[i]],   vol[up],   facecolor='none',       edgecolor='red',   linewidth=0.7, width=0.82)
+        ax_vol.bar([i for i in x if down[i]], vol[down], facecolor='green',       edgecolor='green', linewidth=0.82)
+        ax_vol.set_ylabel("Volume\n(100M)", color='black', fontsize=8)
+
+        ax_macd.fill_between(x, macd, 0, where=(macd>=0), color='red',   alpha=0.5)
+        ax_macd.fill_between(x, macd, 0, where=(macd< 0), color='green',  alpha=0.5)
+        ax_macd.plot(x, dif,  color='orange', linewidth=0.8, label='DIF')
+        ax_macd.plot(x, dea,  color='cyan',    linewidth=0.8, label='DEA')
+        ax_macd.plot(x, macd, color='yellow',  linewidth=0.5, label='MACD')
+        ax_macd.legend(loc='upper left', facecolor='#f0f0f0', labelcolor='black',
+                       fontsize=7, ncol=3, framealpha=0.6)
+        ax_macd.set_ylabel("MACD", color='black', fontsize=8)
+        ax_macd.axhline(0, color='#888', linewidth=0.5)
+
+        ax_kdj.plot(x, K, color='yellow', linewidth=0.9, label='K')
+        ax_kdj.plot(x, D, color='orange',  linewidth=0.9, label='D')
+        ax_kdj.plot(x, J, color='magenta', linewidth=0.6, label='J')
+        ax_kdj.legend(loc='upper left', facecolor='#f0f0f0', labelcolor='black',
+                      fontsize=7, ncol=3, framealpha=0.6)
+        ax_kdj.set_ylabel("KDJ", color='black', fontsize=8)
+        ax_kdj.axhline(80, color='red',   linewidth=0.4, linestyle='--', alpha=0.5)
+        ax_kdj.axhline(20, color='green', linewidth=0.4, linestyle='--', alpha=0.5)
+
+        tick_pos  = list(range(0, len(df), max(1, len(df)//10)))
+        tick_lbls = [df['date'].iloc[i].strftime('%Y-%m-%d') for i in tick_pos]
+        ax_kdj.set_xticks(tick_pos)
+        ax_kdj.set_xticklabels(tick_lbls, rotation=45, color='black', fontsize=7)
+        ax_kdj.set_xlabel("", color='black')
+
+        for ax in [ax1, ax_vol, ax_macd, ax_kdj]:
+            ax.set_xlim(-3, len(x) + 1)
+
+        out_path = f"/tmp/kline_{code}.png"
+        plt.savefig(out_path, dpi=150, facecolor='white', edgecolor='none')
+        plt.close()
+        return out_path
+
+    except Exception:
+        import traceback
+        traceback.print_exc()
+        return None
+
+# ============================================================
+# 批量调度
+# ============================================================
+files = {
+    '补票':   today_dir / 'result_补票.txt',
+    'TePu':   today_dir / 'result_TePu.txt',
+    '填坑':   today_dir / 'result_填坑.txt',
+    '大波浪': today_dir / 'result_大波浪.txt',
+    '红悬停': today_dir / 'result_红悬停.txt',
+    '业绩稳增': today_dir / 'result_业绩稳增.txt',
+}
+
+stocks = []
+for strat, fpath in files.items():
+    if fpath.exists():
+        with open(fpath) as f:
+            lines = [l.strip() for l in f]
+        codes = [l for l in lines if re.match(r'^\d{6}\.(?:SZ|SH|BJ)$', l)]
+        for code in codes:
+            if code not in [s[0] for s in stocks]:
+                stocks.append((code, strat))
+
+print("共" + str(len(stocks)) + "只股票待生成K线图")
+
+done = 0
+for code, strat in stocks:
+    path = generate_chart(code, periods=450, strategy_name=strat + '战法')
+    if path and os.path.exists(path):
+        shutil.copy2(path, str(today_dir / ('kline_' + code + '.png')))
+        done += 1
+
+print("K线图完成: " + str(done) + "/" + str(len(stocks)))

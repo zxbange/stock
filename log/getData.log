@@ -1,0 +1,43 @@
+
+2026-05-03 18:00:03,287 [INFO] get_data.py:158 开始抓取 5512 支股票 | 日期: 20240101 → 20260503
+2026-05-03 19:10:03,226 [INFO] get_data.py:158 开始抓取 5512 支股票 | 日期: 20240101 → 20260503
+2026-05-03 21:05:49,502 [INFO] get_data.py:180 全部任务完成, 数据已保存至 /home/bange/stock/data
+2026-05-04 08:01:18,289 [INFO] get_data.py:158 开始抓取 5512 支股票 | 日期: 20240101 → 20260504
+2026-05-04 09:18:58,697 [INFO] get_data.py:180 全部任务完成, 数据已保存至 /home/bange/stock/data
+2026-05-04 16:28:03,786 [INFO] get_data.py:158 开始抓取 5512 支股票 | 日期: 20240101 → 20260504
+2026-05-04 17:03:57,483 [INFO] get_data.py:159 开始抓取 5512 支股票 | 日期: 20240101 → 20260504
+2026-05-04 18:12:34,800 [INFO] get_data.py:180 全部任务完成, 数据已保存至 /home/bange/stock/data
+2026-05-05 18:00:15,476 [INFO] get_data.py:160 开始抓取 5512 支股票 | 日期: 20240101 → 20260505
+2026-05-05 19:49:46,793 [INFO] get_data.py:182 全部任务完成, 数据已保存至 /home/bange/stock/data
+2026-05-06 18:07:07,548 [INFO] get_data.py:159 开始抓取 5512 支股票 | 日期: 20240101 → 20260506
+2026-05-06 18:07:37,306 [INFO] get_data.py:159 开始抓取 5512 支股票 | 日期: 20240101 → 20260506
+2026-05-06 18:40:13,905 [ERROR] get_data.py:94 读取 data/300007.SZ.csv 失败, 将重新下载
+Traceback (most recent call last):
+  File "/home/bange/stock/get_data.py", line 87, in get_one
+    existing = pd.read_csv(csv_path, parse_dates=["date"])
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/pandas/io/parsers/readers.py", line 1026, in read_csv
+    return _read(filepath_or_buffer, kwds)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/pandas/io/parsers/readers.py", line 620, in _read
+    parser = TextFileReader(filepath_or_buffer, **kwds)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/pandas/io/parsers/readers.py", line 1620, in __init__
+    self._engine = self._make_engine(f, self.engine)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/pandas/io/parsers/readers.py", line 1898, in _make_engine
+    return mapping[engine](f, **self.options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/pandas/io/parsers/c_parser_wrapper.py", line 93, in __init__
+    self._reader = parsers.TextReader(src, **kwds)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "pandas/_libs/parsers.pyx", line 581, in pandas._libs.parsers.TextReader.__cinit__
+pandas.errors.EmptyDataError: No columns to parse from file
+2026-05-06 20:14:16,081 [INFO] get_data.py:181 全部任务完成, 数据已保存至 /home/bange/stock/data
+2026-05-06 20:15:50,790 [INFO] get_data.py:181 全部任务完成, 数据已保存至 /home/bange/stock/data
+2026-05-06 21:00:04,150 [INFO] get_data.py:159 开始抓取 5512 支股票 | 日期: 20240101 → 20260506
+2026-05-06 23:31:16,058 [INFO] get_data.py:181 全部任务完成, 数据已保存至 /home/bange/stock/data
+2026-05-07 17:00:04,279 [INFO] get_data.py:159 开始抓取 5513 支股票 | 日期: 20240101 → 20260507
+2026-05-07 18:57:13,784 [INFO] get_data.py:181 全部任务完成, 数据已保存至 /home/bange/stock/data
+2026-05-08 17:00:08,721 [INFO] get_data.py:159 开始抓取 5513 支股票 | 日期: 20240101 → 20260508
+2026-05-08 19:19:00,385 [INFO] get_data.py:181 全部任务完成, 数据已保存至 /home/bange/stock/data

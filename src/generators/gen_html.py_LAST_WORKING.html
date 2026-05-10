@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>每日选股 20260510</title>
+<style>
+
+* { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+*:focus { outline:none; }
+body { background:#ffffff; color:#333; font-family:system-ui,sans-serif; }
+.header { background:#f0f0f0; padding:16px 20px; text-align:center; }
+.header h1 { font-size:18px; color:#222; margin-bottom:4px; }
+.header p { font-size:12px; color:#999; }
+.strategies { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; padding:16px; max-width:600px; margin:0 auto; }
+.strategy-card { background:#f8f8f8; border-radius:10px; padding:20px 12px; text-align:center; cursor:pointer; transition:transform .15s,box-shadow .15s; border:1.5px solid transparent; }
+.strategy-card:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,.15); border-color:#e30613; }
+.strategy-card:active { transform:scale(.97); }
+.strategy-card .icon { font-size:36px; margin-bottom:8px; }
+.strategy-card .name { font-size:15px; font-weight:bold; color:#222; margin-bottom:4px; }
+.strategy-card .count { font-size:12px; color:#888; }
+.modal { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:#fff; z-index:1000; overflow:hidden; opacity:0; transform:translateX(100%); transition:opacity .25s,transform .25s cubic-bezier(.4,0,.2,1); }
+.modal.active { opacity:1; transform:translateX(0); display:block; }
+.modal-header { background:#f0f0f0; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; position:absolute; top:0; left:0; right:0; z-index:10; }
+.modal-header h2 { font-size:14px; color:#222; }
+.back-btn { background:none; border:1px solid #999; color:#555; padding:5px 12px; border-radius:5px; cursor:pointer; font-size:12px; }
+.modal-stock-list { position:absolute; top:52px; left:0; right:0; bottom:0; overflow-y:auto; padding:12px; }
+.stock-item { margin-bottom:12px; background:#f8f8f8; border-radius:8px; padding:12px 14px; cursor:pointer; display:flex; align-items:center; gap:10px; }
+.stock-item:active { background:#eee; }
+.item-name { font-size:14px; font-weight:bold; color:#222; }
+.item-code { font-size:11px; color:#aaa; margin-left:auto; }
+#chart-modal { display:none; position:fixed; inset:0; z-index:2000; background:rgba(26,26,46,.95); justify-content:center; align-items:center; flex-direction:column; }
+#chart-modal.show { display:flex; }
+#chart-inner { position:relative; background:#1a1a2e; border-radius:10px; width:95vw; height:90vh; overflow:hidden; display:flex; flex-direction:column; }
+#chart-header { background:#16213e; padding:8px 14px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #2a2a4a; flex-shrink:0; gap:8px; min-height:44px; }
+#chart-header h2 { font-size:13px; color:#e0e0e0; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.period-tabs { display:flex; gap:2px; margin-right:6px; }
+.ptab { background:#1a1a2e; color:#9a9aaa; border:1px solid #333; padding:3px 10px; border-radius:4px; cursor:pointer; font-size:11px; }
+.ptab.active { background:#0f3460; color:#4fc3f7; border-color:#4fc3f7; }
+#chart-close-btn { background:#0f3460; color:#4fc3f7; border:1px solid #2a2a4a; padding:3px 10px; border-radius:4px; cursor:pointer; font-size:11px; }
+#chart-body { flex:1; min-height:0; overflow:hidden; display:flex; flex-direction:column; position:relative; }
+.pane { position:relative; border-bottom:1px solid #202040; margin-right:3px; overflow:hidden; box-sizing:border-box; flex-shrink:0; }
+.pane:last-child { border-bottom:none; }
+#p1 { flex:1; min-height:0; }
+#p2 { height:48px; }
+#p3 { height:42px; }
+#p4 { height:42px; }
+.legend { position:absolute; top:2px; left:8px; font-size:10px; color:#aaa; pointer-events:none; z-index:5; background:rgba(26,26,46,.85); padding:1px 5px; border-radius:3px; white-space:nowrap; }
+.legend span { margin-right:5px; }
+.legend .up { color:#ef5350; }
+.legend .down { color:#26a69a; }
+#loading-chart { display:none; color:#888; font-size:14px; padding:40px; text-align:center; }
+#loading-chart.show { display:block; }
+
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>每日选股</h1>
+  <p>交易日：20260510</p>
+</div>
+<div class="strategies">
+<div class="strategy-card" onclick="openModal('补票')"><div class="icon">📈</div><div class="name">补票战法</div><div class="count">5 只</div></div><div class="strategy-card" onclick="openModal('TePu')"><div class="icon">📊</div><div class="name">TePu战法</div><div class="count">2 只</div></div><div class="strategy-card" onclick="openModal('填坑')"><div class="icon">🕳️</div><div class="name">填坑战法</div><div class="count">5 只</div></div><div class="strategy-card" onclick="openModal('大波浪')"><div class="icon">🌊</div><div class="name">大波浪战法</div><div class="count">22 只</div></div><div class="strategy-card" onclick="openModal('红悬停')"><div class="icon">🔴</div><div class="name">红悬停战法</div><div class="count">28 只</div></div><div class="strategy-card" onclick="openModal('业绩稳增')"><div class="icon">💰</div><div class="name">业绩稳增战法</div><div class="count">67 只</div></div>
+</div>
+<div class="modal" id="modal_补票"><div class="modal-header"><h2>补票战法</h2><button class="back-btn" onclick="closeModal('补票')">返回</button></div><div class="modal-stock-list"><div class="stock-item" onclick="openChart('000955.SZ','欣龙控股','补票')"><div class="item-name">欣龙控股</div><div class="item-code">000955.SZ</div></div><div class="stock-item" onclick="openChart('001209.SZ','洪兴股份','补票')"><div class="item-name">洪兴股份</div><div class="item-code">001209.SZ</div></div><div class="stock-item" onclick="openChart('001231.SZ','农心科技','补票')"><div class="item-name">农心科技</div><div class="item-code">001231.SZ</div></div><div class="stock-item" onclick="openChart('002381.SZ','双箭股份','补票')"><div class="item-name">双箭股份</div><div class="item-code">002381.SZ</div></div><div class="stock-item" onclick="openChart('600319.SH','亚星化学','补票')"><div class="item-name">亚星化学</div><div class="item-code">600319.SH</div></div></div></div><div class="modal" id="modal_TePu"><div class="modal-header"><h2>TePu战法</h2><button class="back-btn" onclick="closeModal('TePu')">返回</button></div><div class="modal-stock-list"><div class="stock-item" onclick="openChart('601997.SH','贵阳银行','TePu')"><div class="item-name">贵阳银行</div><div class="item-code">601997.SH</div></div><div class="stock-item" onclick="openChart('605098.SH','行动教育','TePu')"><div class="item-name">行动教育</div><div class="item-code">605098.SH</div></div></div></div><div class="modal" id="modal_填坑"><div class="modal-header"><h2>填坑战法</h2><button class="back-btn" onclick="closeModal('填坑')">返回</button></div><div class="modal-stock-list"><div class="stock-item" onclick="openChart('002454.SZ','松芝股份','填坑')"><div class="item-name">松芝股份</div><div class="item-code">002454.SZ</div></div><div class="stock-item" onclick="openChart('300858.SZ','科拓生物','填坑')"><div class="item-name">科拓生物</div><div class="item-code">300858.SZ</div></div><div class="stock-item" onclick="openChart('301667.SZ','纳百川','填坑')"><div class="item-name">纳百川</div><div class="item-code">301667.SZ</div></div><div class="stock-item" onclick="openChart('601677.SH','明泰铝业','填坑')"><div class="item-name">明泰铝业</div><div class="item-code">601677.SH</div></div><div class="stock-item" onclick="openChart('603655.SH','朗博科技','填坑')"><div class="item-name">朗博科技</div><div class="item-code">603655.SH</div></div></div></div><div class="modal" id="modal_大波浪"><div class="modal-header"><h2>大波浪战法</h2><button class="back-btn" onclick="closeModal('大波浪')">返回</button></div><div class="modal-stock-list"><div class="stock-item" onclick="openChart('000155.SZ','川能动力','大波浪')"><div class="item-name">川能动力</div><div class="item-code">000155.SZ</div></div><div class="stock-item" onclick="openChart('000967.SZ','盈峰环境','大波浪')"><div class="item-name">盈峰环境</div><div class="item-code">000967.SZ</div></div><div class="stock-item" onclick="openChart('002281.SZ','光迅科技','大波浪')"><div class="item-name">光迅科技</div><div class="item-code">002281.SZ</div></div><div class="stock-item" onclick="openChart('002384.SZ','东山精密','大波浪')"><div class="item-name">东山精密</div><div class="item-code">002384.SZ</div></div><div class="stock-item" onclick="openChart('002491.SZ','通鼎互联','大波浪')"><div class="item-name">通鼎互联</div><div class="item-code">002491.SZ</div></div><div class="stock-item" onclick="openChart('002831.SZ','裕同科技','大波浪')"><div class="item-name">裕同科技</div><div class="item-code">002831.SZ</div></div><div class="stock-item" onclick="openChart('300054.SZ','鼎龙股份','大波浪')"><div class="item-name">鼎龙股份</div><div class="item-code">300054.SZ</div></div><div class="stock-item" onclick="openChart('300857.SZ','协创数据','大波浪')"><div class="item-name">协创数据</div><div class="item-code">300857.SZ</div></div><div class="stock-item" onclick="openChart('600176.SH','中国巨石','大波浪')"><div class="item-name">中国巨石</div><div class="item-code">600176.SH</div></div><div class="stock-item" onclick="openChart('600233.SH','圆通速递','大波浪')"><div class="item-name">圆通速递</div><div class="item-code">600233.SH</div></div><div class="stock-item" onclick="openChart('600236.SH','桂冠电力','大波浪')"><div class="item-name">桂冠电力</div><div class="item-code">600236.SH</div></div><div class="stock-item" onclick="openChart('600522.SH','中天科技','大波浪')"><div class="item-name">中天科技</div><div class="item-code">600522.SH</div></div><div class="stock-item" onclick="openChart('600773.SH','西藏城投','大波浪')"><div class="item-name">西藏城投</div><div class="item-code">600773.SH</div></div><div class="stock-item" onclick="openChart('600777.SH','*ST新潮','大波浪')"><div class="item-name">*ST新潮</div><div class="item-code">600777.SH</div></div><div class="stock-item" onclick="openChart('601778.SH','晶科科技','大波浪')"><div class="item-name">晶科科技</div><div class="item-code">601778.SH</div></div><div class="stock-item" onclick="openChart('603659.SH','璞泰来','大波浪')"><div class="item-name">璞泰来</div><div class="item-code">603659.SH</div></div><div class="stock-item" onclick="openChart('603688.SH','石英股份','大波浪')"><div class="item-name">石英股份</div><div class="item-code">603688.SH</div></div><div class="stock-item" onclick="openChart('605117.SH','德业股份','大波浪')"><div class="item-name">德业股份</div><div class="item-code">605117.SH</div></div><div class="stock-item" onclick="openChart('688025.SH','杰普特','大波浪')"><div class="item-name">杰普特</div><div class="item-code">688025.SH</div></div><div class="stock-item" onclick="openChart('688525.SH','佰维存储','大波浪')"><div class="item-name">佰维存储</div><div class="item-code">688525.SH</div></div><div class="stock-item" onclick="openChart('688629.SH','华丰科技','大波浪')"><div class="item-name">华丰科技</div><div class="item-code">688629.SH</div></div><div class="stock-item" onclick="openChart('688702.SH','盛科通信-U','大波浪')"><div class="item-name">盛科通信-U</div><div class="item-code">688702.SH</div></div></div></div><div class="modal" id="modal_红悬停"><div class="modal-header"><h2>红悬停战法</h2><button class="back-btn" onclick="closeModal('红悬停')">返回</button></div><div class="modal-stock-list"><div class="stock-item" onclick="openChart('000066.SZ','中国长城','红悬停')"><div class="item-name">中国长城</div><div class="item-code">000066.SZ</div></div><div class="stock-item" onclick="openChart('688069.SH','德林海','红悬停')"><div class="item-name">德林海</div><div class="item-code">688069.SH</div></div><div class="stock-item" onclick="openChart('603936.SH','博敏电子','红悬停')"><div class="item-name">博敏电子</div><div class="item-code">603936.SH</div></div><div class="stock-item" onclick="openChart('001309.SZ','德明利','红悬停')"><div class="item-name">德明利</div><div class="item-code">001309.SZ</div></div><div class="stock-item" onclick="openChart('000815.SZ','美利云','红悬停')"><div class="item-name">美利云</div><div class="item-code">000815.SZ</div></div><div class="stock-item" onclick="openChart('000060.SZ','中金岭南','红悬停')"><div class="item-name">中金岭南</div><div class="item-code">000060.SZ</div></div><div class="stock-item" onclick="openChart('002903.SZ','宇环数控','红悬停')"><div class="item-name">宇环数控</div><div class="item-code">002903.SZ</div></div><div class="stock-item" onclick="openChart('603248.SH','锡华科技','红悬停')"><div class="item-name">锡华科技</div><div class="item-code">603248.SH</div></div><div class="stock-item" onclick="openChart('603269.SH','海鸥股份','红悬停')"><div class="item-name">海鸥股份</div><div class="item-code">603269.SH</div></div><div class="stock-item" onclick="openChart('002787.SZ','华源控股','红悬停')"><div class="item-name">华源控股</div><div class="item-code">002787.SZ</div></div><div class="stock-item" onclick="openChart('603256.SH','宏和科技','红悬停')"><div class="item-name">宏和科技</div><div class="item-code">603256.SH</div></div><div class="stock-item" onclick="openChart('002272.SZ','川润股份','红悬停')"><div class="item-name">川润股份</div><div class="item-code">002272.SZ</div></div><div class="stock-item" onclick="openChart('002149.SZ','西部材料','红悬停')"><div class="item-name">西部材料</div><div class="item-code">002149.SZ</div></div><div class="stock-item" onclick="openChart('601016.SH','节能风电','红悬停')"><div class="item-name">节能风电</div><div class="item-code">601016.SH</div></div><div class="stock-item" onclick="openChart('600673.SH','东阳光','红悬停')"><div class="item-name">东阳光</div><div class="item-code">600673.SH</div></div><div class="stock-item" onclick="openChart('603001.SH','奥康国际','红悬停')"><div class="item-name">奥康国际</div><div class="item-code">603001.SH</div></div><div class="stock-item" onclick="openChart('300042.SZ','朗科科技','红悬停')"><div class="item-name">朗科科技</div><div class="item-code">300042.SZ</div></div><div class="stock-item" onclick="openChart('600301.SH','华锡有色','红悬停')"><div class="item-name">华锡有色</div><div class="item-code">600301.SH</div></div><div class="stock-item" onclick="openChart('002217.SZ','合力泰','红悬停')"><div class="item-name">合力泰</div><div class="item-code">002217.SZ</div></div><div class="stock-item" onclick="openChart('002015.SZ','协鑫能科','红悬停')"><div class="item-name">协鑫能科</div><div class="item-code">002015.SZ</div></div><div class="stock-item" onclick="openChart('601778.SH','晶科科技','红悬停')"><div class="item-name">晶科科技</div><div class="item-code">601778.SH</div></div><div class="stock-item" onclick="openChart('600719.SH','大连热电','红悬停')"><div class="item-name">大连热电</div><div class="item-code">600719.SH</div></div><div class="stock-item" onclick="openChart('603063.SH','禾望电气','红悬停')"><div class="item-name">禾望电气</div><div class="item-code">603063.SH</div></div><div class="stock-item" onclick="openChart('000802.SZ','北京文化','红悬停')"><div class="item-name">北京文化</div><div class="item-code">000802.SZ</div></div><div class="stock-item" onclick="openChart('000818.SZ','航锦科技','红悬停')"><div class="item-name">航锦科技</div><div class="item-code">000818.SZ</div></div><div class="stock-item" onclick="openChart('600396.SH','华电辽能','红悬停')"><div class="item-name">华电辽能</div><div class="item-code">600396.SH</div></div><div class="stock-item" onclick="openChart('000889.SZ','中嘉博创','红悬停')"><div class="item-name">中嘉博创</div><div class="item-code">000889.SZ</div></div><div class="stock-item" onclick="openChart('603158.SH','腾龙股份','红悬停')"><div class="item-name">腾龙股份</div><div class="item-code">603158.SH</div></div></div></div><div class="modal" id="modal_业绩稳增"><div class="modal-header"><h2>业绩稳增战法</h2><button class="back-btn" onclick="closeModal('业绩稳增')">返回</button></div><div class="modal-stock-list"><div class="stock-item" onclick="openChart('603256.SH','宏和科技','业绩稳增')"><div class="item-name">宏和科技</div><div class="item-code">603256.SH</div></div><div class="stock-item" onclick="openChart('688313.SH','仕佳光子','业绩稳增')"><div class="item-name">仕佳光子</div><div class="item-code">688313.SH</div></div><div class="stock-item" onclick="openChart('300473.SZ','德尔股份','业绩稳增')"><div class="item-name">德尔股份</div><div class="item-code">300473.SZ</div></div><div class="stock-item" onclick="openChart('600610.SH','中毅达','业绩稳增')"><div class="item-name">中毅达</div><div class="item-code">600610.SH</div></div><div class="stock-item" onclick="openChart('002602.SZ','世纪华通','业绩稳增')"><div class="item-name">世纪华通</div><div class="item-code">002602.SZ</div></div><div class="stock-item" onclick="openChart('688519.SH','南亚新材','业绩稳增')"><div class="item-name">南亚新材</div><div class="item-code">688519.SH</div></div><div class="stock-item" onclick="openChart('300975.SZ','商络电子','业绩稳增')"><div class="item-name">商络电子</div><div class="item-code">300975.SZ</div></div><div class="stock-item" onclick="openChart('688183.SH','生益电子','业绩稳增')"><div class="item-name">生益电子</div><div class="item-code">688183.SH</div></div><div class="stock-item" onclick="openChart('301356.SZ','天振股份','业绩稳增')"><div class="item-name">天振股份</div><div class="item-code">301356.SZ</div></div><div class="stock-item" onclick="openChart('000600.SZ','建投能源','业绩稳增')"><div class="item-name">建投能源</div><div class="item-code">000600.SZ</div></div><div class="stock-item" onclick="openChart('688322.SH','奥比中光-W','业绩稳增')"><div class="item-name">奥比中光-W</div><div class="item-code">688322.SH</div></div><div class="stock-item" onclick="openChart('300972.SZ','万辰集团','业绩稳增')"><div class="item-name">万辰集团</div><div class="item-code">300972.SZ</div></div><div class="stock-item" onclick="openChart('300476.SZ','胜宏科技','业绩稳增')"><div class="item-name">胜宏科技</div><div class="item-code">300476.SZ</div></div><div class="stock-item" onclick="openChart('600366.SH','宁波韵升','业绩稳增')"><div class="item-name">宁波韵升</div><div class="item-code">600366.SH</div></div><div class="stock-item" onclick="openChart('300502.SZ','新易盛','业绩稳增')"><div class="item-name">新易盛</div><div class="item-code">300502.SZ</div></div><div class="stock-item" onclick="openChart('300409.SZ','道氏技术','业绩稳增')"><div class="item-name">道氏技术</div><div class="item-code">300409.SZ</div></div><div class="stock-item" onclick="openChart('300132.SZ','青松股份','业绩稳增')"><div class="item-name">青松股份</div><div class="item-code">300132.SZ</div></div><div class="stock-item" onclick="openChart('301200.SZ','大族数控','业绩稳增')"><div class="item-name">大族数控</div><div class="item-code">301200.SZ</div></div><div class="stock-item" onclick="openChart('603379.SH','三美股份','业绩稳增')"><div class="item-name">三美股份</div><div class="item-code">603379.SH</div></div><div class="stock-item" onclick="openChart('601798.SH','蓝科高新','业绩稳增')"><div class="item-name">蓝科高新</div><div class="item-code">601798.SH</div></div><div class="stock-item" onclick="openChart('688213.SH','思特威-W','业绩稳增')"><div class="item-name">思特威-W</div><div class="item-code">688213.SH</div></div><div class="stock-item" onclick="openChart('002741.SZ','光华科技','业绩稳增')"><div class="item-name">光华科技</div><div class="item-code">002741.SZ</div></div><div class="stock-item" onclick="openChart('605376.SH','博迁新材','业绩稳增')"><div class="item-name">博迁新材</div><div class="item-code">605376.SH</div></div><div class="stock-item" onclick="openChart('600685.SH','中船防务','业绩稳增')"><div class="item-name">中船防务</div><div class="item-code">600685.SH</div></div><div class="stock-item" onclick="openChart('300249.SZ','依米康','业绩稳增')"><div class="item-name">依米康</div><div class="item-code">300249.SZ</div></div><div class="stock-item" onclick="openChart('002928.SZ','华夏航空','业绩稳增')"><div class="item-name">华夏航空</div><div class="item-code">002928.SZ</div></div><div class="stock-item" onclick="openChart('002284.SZ','亚太股份','业绩稳增')"><div class="item-name">亚太股份</div><div class="item-code">002284.SZ</div></div><div class="stock-item" onclick="openChart('600338.SH','西藏珠峰','业绩稳增')"><div class="item-name">西藏珠峰</div><div class="item-code">600338.SH</div></div><div class="stock-item" onclick="openChart('300221.SZ','银禧科技','业绩稳增')"><div class="item-name">银禧科技</div><div class="item-code">300221.SZ</div></div><div class="stock-item" onclick="openChart('688222.SH','成都先导','业绩稳增')"><div class="item-name">成都先导</div><div class="item-code">688222.SH</div></div><div class="stock-item" onclick="openChart('002748.SZ','世龙实业','业绩稳增')"><div class="item-name">世龙实业</div><div class="item-code">002748.SZ</div></div><div class="stock-item" onclick="openChart('300199.SZ','翰宇药业','业绩稳增')"><div class="item-name">翰宇药业</div><div class="item-code">300199.SZ</div></div><div class="stock-item" onclick="openChart('600686.SH','金龙汽车','业绩稳增')"><div class="item-name">金龙汽车</div><div class="item-code">600686.SH</div></div><div class="stock-item" onclick="openChart('600183.SH','生益科技','业绩稳增')"><div class="item-name">生益科技</div><div class="item-code">600183.SH</div></div><div class="stock-item" onclick="openChart('300602.SZ','飞荣达','业绩稳增')"><div class="item-name">飞荣达</div><div class="item-code">300602.SZ</div></div><div class="stock-item" onclick="openChart('600160.SH','巨化股份','业绩稳增')"><div class="item-name">巨化股份</div><div class="item-code">600160.SH</div></div><div class="stock-item" onclick="openChart('600550.SH','保变电气','业绩稳增')"><div class="item-name">保变电气</div><div class="item-code">600550.SH</div></div><div class="stock-item" onclick="openChart('301183.SZ','东田微','业绩稳增')"><div class="item-name">东田微</div><div class="item-code">301183.SZ</div></div><div class="stock-item" onclick="openChart('688127.SH','蓝特光学','业绩稳增')"><div class="item-name">蓝特光学</div><div class="item-code">688127.SH</div></div><div class="stock-item" onclick="openChart('603893.SH','瑞芯微','业绩稳增')"><div class="item-name">瑞芯微</div><div class="item-code">603893.SH</div></div><div class="stock-item" onclick="openChart('600988.SH','赤峰黄金','业绩稳增')"><div class="item-name">赤峰黄金</div><div class="item-code">600988.SH</div></div><div class="stock-item" onclick="openChart('000833.SZ','粤桂股份','业绩稳增')"><div class="item-name">粤桂股份</div><div class="item-code">000833.SZ</div></div><div class="stock-item" onclick="openChart('002755.SZ','奥赛康','业绩稳增')"><div class="item-name">奥赛康</div><div class="item-code">002755.SZ</div></div><div class="stock-item" onclick="openChart('002901.SZ','大博医疗','业绩稳增')"><div class="item-name">大博医疗</div><div class="item-code">002901.SZ</div></div><div class="stock-item" onclick="openChart('603890.SH','春秋电子','业绩稳增')"><div class="item-name">春秋电子</div><div class="item-code">603890.SH</div></div><div class="stock-item" onclick="openChart('601899.SH','紫金矿业','业绩稳增')"><div class="item-name">紫金矿业</div><div class="item-code">601899.SH</div></div><div class="stock-item" onclick="openChart('600186.SH','莲花控股','业绩稳增')"><div class="item-name">莲花控股</div><div class="item-code">600186.SH</div></div><div class="stock-item" onclick="openChart('688008.SH','澜起科技','业绩稳增')"><div class="item-name">澜起科技</div><div class="item-code">688008.SH</div></div><div class="stock-item" onclick="openChart('603993.SH','洛阳钼业','业绩稳增')"><div class="item-name">洛阳钼业</div><div class="item-code">603993.SH</div></div><div class="stock-item" onclick="openChart('688681.SH','科汇股份','业绩稳增')"><div class="item-name">科汇股份</div><div class="item-code">688681.SH</div></div><div class="stock-item" onclick="openChart('000554.SZ','泰山石油','业绩稳增')"><div class="item-name">泰山石油</div><div class="item-code">000554.SZ</div></div><div class="stock-item" onclick="openChart('688578.SH','艾力斯','业绩稳增')"><div class="item-name">艾力斯</div><div class="item-code">688578.SH</div></div><div class="stock-item" onclick="openChart('000729.SZ','燕京啤酒','业绩稳增')"><div class="item-name">燕京啤酒</div><div class="item-code">000729.SZ</div></div><div class="stock-item" onclick="openChart('600547.SH','山东黄金','业绩稳增')"><div class="item-name">山东黄金</div><div class="item-code">600547.SH</div></div><div class="stock-item" onclick="openChart('002463.SZ','沪电股份','业绩稳增')"><div class="item-name">沪电股份</div><div class="item-code">002463.SZ</div></div><div class="stock-item" onclick="openChart('601991.SH','大唐发电','业绩稳增')"><div class="item-name">大唐发电</div><div class="item-code">601991.SH</div></div><div class="stock-item" onclick="openChart('002245.SZ','蔚蓝锂芯','业绩稳增')"><div class="item-name">蔚蓝锂芯</div><div class="item-code">002245.SZ</div></div><div class="stock-item" onclick="openChart('000957.SZ','中通客车','业绩稳增')"><div class="item-name">中通客车</div><div class="item-code">000957.SZ</div></div><div class="stock-item" onclick="openChart('688209.SH','英集芯','业绩稳增')"><div class="item-name">英集芯</div><div class="item-code">688209.SH</div></div><div class="stock-item" onclick="openChart('603979.SH','金诚信','业绩稳增')"><div class="item-name">金诚信</div><div class="item-code">603979.SH</div></div><div class="stock-item" onclick="openChart('603699.SH','纽威股份','业绩稳增')"><div class="item-name">纽威股份</div><div class="item-code">603699.SH</div></div><div class="stock-item" onclick="openChart('000975.SZ','山金国际','业绩稳增')"><div class="item-name">山金国际</div><div class="item-code">000975.SZ</div></div><div class="stock-item" onclick="openChart('688041.SH','海光信息','业绩稳增')"><div class="item-name">海光信息</div><div class="item-code">688041.SH</div></div><div class="stock-item" onclick="openChart('003026.SZ','中晶科技','业绩稳增')"><div class="item-name">中晶科技</div><div class="item-code">003026.SZ</div></div><div class="stock-item" onclick="openChart('001339.SZ','智微智能','业绩稳增')"><div class="item-name">智微智能</div><div class="item-code">001339.SZ</div></div><div class="stock-item" onclick="openChart('300054.SZ','鼎龙股份','业绩稳增')"><div class="item-name">鼎龙股份</div><div class="item-code">300054.SZ</div></div><div class="stock-item" onclick="openChart('600573.SH','惠泉啤酒','业绩稳增')"><div class="item-name">惠泉啤酒</div><div class="item-code">600573.SH</div></div></div></div>
+<div id="chart-modal">
+  <div id="chart-inner">
+    <div id="chart-header">
+      <h2 id="chart-title">--</h2>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <div class="period-tabs">
+          <button class="ptab active" data-p="D">日K</button>
+          <button class="ptab" data-p="W">周K</button>
+          <button class="ptab" data-p="M">月K</button>
+        </div>
+        <button id="chart-close-btn" onclick="closeChart()">关闭</button>
+      </div>
+    </div>
+    <div id="loading-chart">加载中…</div>
+    <div id="chart-body">
+      <div class="pane" id="p1"><div class="legend" id="leg1"></div></div>
+      <div class="pane" id="p2"><div class="legend" id="leg2"></div></div>
+      <div class="pane" id="p3"><div class="legend" id="leg3"></div></div>
+      <div class="pane" id="p4"><div class="legend" id="leg4"></div></div>
+    </div>
+  </div>
+</div>
+<script src="./lightweight-charts.standalone.production.js"></script>
+<script>
+
+var strategyNames = {"补票": "补票战法", "TePu": "TePu战法", "填坑": "填坑战法", "大波浪": "大波浪战法", "红悬停": "红悬停战法", "业绩稳增": "业绩稳增战法"};
+var _ch = null, _obs = null, _curCode = null, _curName = '', _curKey = '', _curPeriod = 'D';
+var _zoomRatio = 1.0;   // 缩放比例，>1 放大（看更少K线），<1 缩小（看更多）
+var _panX = 0;          // 横向偏移量
+
+function openModal(key) { document.getElementById('modal_'+key).classList.add('active'); }
+function closeModal(key) { document.getElementById('modal_'+key).classList.remove('active'); }
+function openChart(code, name, key) {
+  _curCode = code; _curName = name; _curKey = key; _curPeriod = 'D';
+  _zoomRatio = 1.0; _panX = 0;
+  document.getElementById('chart-title').textContent = strategyNames[key] + '：' + name;
+  document.querySelectorAll('.ptab').forEach(function(b){ b.classList.toggle('active', b.dataset.p==='D'); });
+  document.getElementById('chart-modal').classList.add('show');
+  loadChart();
+}
+function closeChart() {
+  destroyChart();
+  document.getElementById('chart-modal').classList.remove('show');
+}
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    if (document.getElementById('chart-modal').classList.contains('show')) closeChart();
+    else closeModal(_curKey);
+  }
+});
+
+function destroyChart() {
+  if (_obs) { _obs.disconnect(); _obs = null; }
+  if (_ch) {
+    ['ch1','ch2','ch3','ch4'].forEach(function(id) {
+      try { var c = document.getElementById(id); if (c && _ch[id]) { _ch[id].remove(); _ch[id] = null; } } catch(e) {}
+    });
+    _ch = null;
+  }
+}
+
+function loadChart() {
+  var code = _curCode;
+  var period = _curPeriod;
+  var baseUrl = 'indicators/';
+  var jsonFile = period === 'D' ? code + '.json' : code + '_' + period.toLowerCase() + '.json';
+  document.getElementById('loading-chart').classList.add('show');
+  fetch(baseUrl + jsonFile).then(function(r) { return r.ok ? r.json() : null; }).then(function(data) {
+    document.getElementById('loading-chart').classList.remove('show');
+    if (!data) { alert('数据加载失败'); return; }
+    var kdata = data.kline || data.rows;
+    var ind = data.ind || data.indicators;
+    if (!kdata || !ind) { alert('数据格式错误'); return; }
+    destroyChart();
+    renderChart(kdata, ind, period);
+  }).catch(function(e) {
+    document.getElementById('loading-chart').classList.remove('show');
+    alert('加载失败: ' + e.message);
+  });
+}
+
+function clampPan(range, logicalRange, chartWidth) {
+  // 限制拖动范围，不让最后1根K线偏离屏幕右侧超过50px
+  if (!range || !logicalRange) return;
+  var lastBar = logicalRange.to - 1;
+  var minVisible = lastBar - chartWidth * _zoomRatio / 2;
+  var maxVisible = lastBar + 0.5;
+  if (range.from < minVisible) {
+    range.from = minVisible;
+    range.to = minVisible + chartWidth * _zoomRatio;
+  }
+  if (range.to > maxVisible + 1) {
+    range.to = maxVisible + 1;
+    range.from = range.to - chartWidth * _zoomRatio;
+  }
+}
+
+function applyZoomPan(ch1) {
+  if (!ch1) return;
+  var logicalRange = ch1.timeScale().getVisibleLogicalRange();
+  if (!logicalRange) return;
+  var chartWidth = document.getElementById('p1').clientWidth || 800;
+  var currentSpan = logicalRange.to - logicalRange.from;
+  var targetSpan = Math.round(chartWidth * _zoomRatio);
+  var lastBar = ch1._state._items.length - 1;
+  var panOffset = _panX * targetSpan;
+  var center = (logicalRange.from + logicalRange.to) / 2 + panOffset;
+  var half = targetSpan / 2;
+  var newFrom = Math.max(0, center - half);
+  var newTo = Math.min(lastBar + 1, newFrom + targetSpan);
+  newFrom = newTo - targetSpan;
+  if (newFrom < 0) { newFrom = 0; newTo = targetSpan; }
+  var clamped = { from: newFrom, to: newTo };
+  clampPan(clamped, { from: newFrom, to: newTo }, chartWidth);
+  try { ch1.timeScale().setVisibleLogicalRange(clamped); } catch(e) {}
+}
+
+function renderChart(rows, ind, period) {
+  var N = rows.length;
+  var times = rows.map(function(r) { return r.time; });
+  var c1 = document.getElementById('p1'), c2 = document.getElementById('p2'),
+      c3 = document.getElementById('p3'), c4 = document.getElementById('p4');
+  var leg1El = document.getElementById('leg1'), leg2El = document.getElementById('leg2'),
+      leg3El = document.getElementById('leg3'), leg4El = document.getElementById('leg4');
+
+  function chOpts(c, h) {
+    return {
+      width: c.clientWidth || 400,
+      height: h || 100,
+      layout: { backgroundColor: '#1a1a2e', textColor: '#9a9aaa' },
+      grid: { vertLines: { color: '#202040' }, horzLines: { color: '#202040' } },
+      rightPriceScale: { visible: false },
+      timeScale: { borderColor: '#333', timeVisible: true, secondsValue: false },
+      crosshair: { mode: LightweightCharts.CrosshairMode.Normal }
+    };
+  }
+
+  var ch1 = LightweightCharts.createChart(c1, chOpts(c1, c1.clientHeight || 300));
+  var ch2 = LightweightCharts.createChart(c2, chOpts(c2, 48));
+  var ch3 = LightweightCharts.createChart(c3, chOpts(c3, 42));
+  var ch4 = LightweightCharts.createChart(c4, chOpts(c4, 42));
+  _ch = { ch1: ch1, ch2: ch2, ch3: ch3, ch4: ch4 };
+
+  var cd = ch1.addCandlestickSeries({
+    upColor: '#ef5350', downColor: '#26a69a', borderVisible: false,
+    wickUpColor: '#ef5350', wickDownColor: '#26a69a',
+    priceLineVisible: false, lastValueVisible: false
+  });
+  cd.setData(rows.map(function(r) { return { time: r.time, open: r.o, high: r.h, low: r.l, close: r.c }; }));
+
+  function addMA(ch, key, color) {
+    if (!ind[key]) return null;
+    var s = ch.addLineSeries({ color: color, lineWidth: 0.5, priceLineVisible: false, lastValueVisible: false, opacity: 0.7 });
+    s.setData(times.map(function(t, i) { return { time: t, value: ind[key][i] }; }).filter(function(d) { return d.value != null; }));
+    return s;
+  }
+  addMA(ch1, 'ma5', '#ffea00'); addMA(ch1, 'ma10', '#ff9800'); addMA(ch1, 'ma20', '#00bcd4');
+  addMA(ch1, 'ma30', '#e040fb'); addMA(ch1, 'ma60', '#00e676');
+  if (period === 'D') { addMA(ch1, 'ma120', '#ffffff'); addMA(ch1, 'ma240', '#aaaaaa'); }
+
+  var vl = ch2.addHistogramSeries({ priceFormat: { type: 'volume' }, priceLineVisible: false, lastValueVisible: false });
+  vl.setData(rows.map(function(d) { return { time: d.time, value: d.v, color: d.c >= d.o ? '#ef535088' : '#26a69a88' }; }));
+
+  var mh = ch3.addHistogramSeries({ priceLineVisible: false, lastValueVisible: false });
+  mh.setData(times.map(function(t, i) { return { time: t, value: ind.macd[i], color: ind.macd[i] >= 0 ? '#ef535088' : '#26a69a88' }; }));
+  var dL = ch3.addLineSeries({ color: '#ff9800', lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
+  dL.setData(times.map(function(t, i) { return { time: t, value: ind.dif[i] }; }));
+  var deL = ch3.addLineSeries({ color: '#00bcd4', lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
+  deL.setData(times.map(function(t, i) { return { time: t, value: ind.dea[i] }; }));
+  ch3.addLineSeries({ color: '#555', lineWidth: 1, priceLineVisible: false, lastValueVisible: false }).setData(times.map(function(t) { return { time: t, value: 0 }; }));
+
+  var kL = ch4.addLineSeries({ color: '#ffea00', lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
+  var dKL = ch4.addLineSeries({ color: '#ff9800', lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
+  var jL = ch4.addLineSeries({ color: '#e040fb', lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
+  kL.setData(times.map(function(t, i) { return { time: t, value: ind.K[i] }; }));
+  dKL.setData(times.map(function(t, i) { return { time: t, value: ind.D[i] }; }));
+  jL.setData(times.map(function(t, i) { return { time: t, value: ind.J[i] }; }));
+
+  // ── 同步四面板时间轴 ────────────────────────────────────────────────────
+  var syncing = false;
+  [ch1, ch2, ch3, ch4].forEach(function(ch) {
+    ch.timeScale().subscribeVisibleLogicalRangeChange(function(range) {
+      if (syncing || !range) return;
+      syncing = true;
+      [ch1, ch2, ch3, ch4].forEach(function(other) {
+        if (other !== ch) { try { other.timeScale().setVisibleLogicalRange(range); } catch(e) {} }
+      });
+      syncing = false;
+    });
+  });
+
+  // ── 锁定右侧最新K线 + 滚轮缩放 + 拖动 ─────────────────────────────────
+  function getLastBarIndex() {
+    var lr = ch1.timeScale().getVisibleLogicalRange();
+    if (!lr) return rows.length - 1;
+    return Math.min(rows.length - 1, Math.ceil(lr.to));
+  }
+
+  function lockRight() {
+    var lastIdx = getLastBarIndex();
+    var chartW = c1.clientWidth || 800;
+    var span = (ch1.timeScale().getVisibleLogicalRange() || { from: 0, to: chartW / 10 }).to
+             - (ch1.timeScale().getVisibleLogicalRange() || { from: 0, to: chartW / 10 }).from;
+    span = Math.max(10, Math.round(span));
+    var toVal = lastIdx + 0.5;
+    var fromVal = Math.max(0, toVal - span);
+    try {
+      ch1.timeScale().setVisibleLogicalRange({ from: fromVal, to: toVal });
+      [ch2, ch3, ch4].forEach(function(ch) {
+        try { ch.timeScale().setVisibleLogicalRange({ from: fromVal, to: toVal }); } catch(e) {}
+      });
+    } catch(e) {}
+  }
+
+  c1.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    var ratio = e.deltaY > 0 ? 1.15 : 0.87;
+    _zoomRatio = Math.max(0.1, Math.min(20, _zoomRatio * ratio));
+    // 缩放以右侧蜡烛为原点：记录当前最右蜡烛index，保持它不动
+    var lr = ch1.timeScale().getVisibleLogicalRange();
+    if (!lr) return;
+    var rightIdx = Math.ceil(lr.to - 1);
+    var chartW = c1.clientWidth || 800;
+    var newSpan = Math.max(10, chartW * _zoomRatio);
+    var newFrom = Math.max(0, rightIdx + 0.5 - newSpan);
+    var newTo = newFrom + newSpan;
+    var clamped = { from: newFrom, to: newTo };
+    clampPan(clamped, { from: newFrom, to: newTo }, chartW);
+    try {
+      ch1.timeScale().setVisibleLogicalRange(clamped);
+      [ch2, ch3, ch4].forEach(function(ch) {
+        try { ch.timeScale().setVisibleLogicalRange(clamped); } catch(e) {}
+      });
+    } catch(e) {}
+  }, { passive: false });
+
+  // 拖动平移
+  var isDragging = false, startX = 0, startPanX = 0;
+  c1.addEventListener('mousedown', function(e) {
+    isDragging = true; startX = e.clientX; startPanX = _panX;
+  });
+  document.addEventListener('mousemove', function(e) {
+    if (!isDragging) return;
+    var dx = (e.clientX - startX) / (c1.clientWidth || 800);
+    _panX = startPanX + dx * _zoomRatio;
+    applyZoomPan(ch1);
+  });
+  document.addEventListener('mouseup', function() { isDragging = false; });
+
+  // 双击放大2x
+  c1.addEventListener('dblclick', function(e) {
+    var lr = ch1.timeScale().getVisibleLogicalRange();
+    if (!lr) return;
+    var rightIdx = Math.ceil(lr.to - 1);
+    _zoomRatio = Math.max(0.1, _zoomRatio * 0.5);
+    var chartW = c1.clientWidth || 800;
+    var newSpan = Math.max(10, chartW * _zoomRatio);
+    var newFrom = Math.max(0, rightIdx + 0.5 - newSpan);
+    var newTo = newFrom + newSpan;
+    var clamped = { from: newFrom, to: newTo };
+    clampPan(clamped, { from: newFrom, to: newTo }, chartW);
+    try {
+      ch1.timeScale().setVisibleLogicalRange(clamped);
+      [ch2, ch3, ch4].forEach(function(ch) {
+        try { ch.timeScale().setVisibleLogicalRange(clamped); } catch(e) {}
+      });
+    } catch(e) {}
+  });
+
+  // 初始锁定右侧
+  lockRight();
+
+  // ResizeObserver
+  _obs = new ResizeObserver(function() {
+    var w = Math.floor(c1.offsetWidth) - 2;
+    [{ch: ch1, el: c1}, {ch: ch2, el: c2}, {ch: ch3, el: c3}, {ch: ch4, el: c4}].forEach(function(o) {
+      if (o.ch) o.ch.resize(w, Math.floor(o.el.clientHeight));
+    });
+  });
+  [c1, c2, c3, c4].forEach(function(el) { _obs.observe(el); });
+
+  function f2(v) { return v == null ? '--' : v.toFixed(2); }
+  function pctVal(c) {
+    if (c.pct != null) return c.pct;
+    if (c.o != 0) return (c.c - c.o) / c.o * 100;
+    return 0;
+  }
+  function updateInfo(i) {
+    if (i < 0 || i >= rows.length) return;
+    var c = rows[i], up = c.c >= c.o;
+    var clr = up ? '#ef5350' : '#26a69a';
+    var pct = pctVal(c);
+    var leg1 = '<div>收:<span style="color:' + clr + '">' + c.c.toFixed(2) + '</span> 开:' + f2(c.o) + ' 高:' + f2(c.h) + ' 低:' + f2(c.l) + ' <span style="color:' + (pct >= 0 ? '#ef5350' : '#26a69a') + '">' + (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%</span></div>';
+    leg1 += '<div><span style="color:#ffea00">MA5:' + f2(ind.ma5[i]) + '</span> <span style="color:#ff9800">MA10:' + f2(ind.ma10[i]) + '</span> <span style="color:#00bcd4">MA20:' + f2(ind.ma20[i]) + '</span> <span style="color:#e040fb">MA30:' + f2(ind.ma30[i]) + '</span> <span style="color:#00e676">MA60:' + f2(ind.ma60[i]) + '</span></div>';
+    if (period === 'D') leg1 += '<div><span style="color:#fff">MA120:' + f2(ind.ma120[i]) + '</span> <span style="color:#aaa">MA240:' + f2(ind.ma240[i]) + '</span></div>';
+    leg1El.innerHTML = leg1;
+    leg2El.innerHTML = '<span style="color:' + clr + '">VOL ' + f2(c.v) + '</span>';
+    leg3El.innerHTML = '<span style="color:#ff9800">DIF' + f2(ind.dif[i]) + '</span> <span style="color:#00bcd4">DEA' + f2(ind.dea[i]) + '</span> <span style="color:' + (ind.macd[i] >= 0 ? '#ef5350' : '#26a69a') + '">MACD' + f2(ind.macd[i]) + '</span>';
+    leg4El.innerHTML = '<span style="color:#ffea00">K' + f2(ind.K[i]) + '</span> <span style="color:#ff9800">D' + f2(ind.D[i]) + '</span> <span style="color:#e040fb">J' + f2(ind.J[i]) + '</span>';
+  }
+  updateInfo(N - 1);
+
+  ch1.subscribeCrosshairMove(function(p) {
+    if (!p.time) {
+      try { [ch2, ch3, ch4].forEach(function(ch) { ch.setCrosshairPosition(1e15, undefined); }); } catch(e) {}
+      return;
+    }
+    var idx = rows.findIndex(function(r) { return r.time === p.time; });
+    if (idx < 0) return;
+    updateInfo(idx);
+    [ch2, ch3, ch4].forEach(function(ch) {
+      try { var sv = Object.values(p.seriesData)[0]; ch.setCrosshairPosition(p.point.x, sv && sv.value); } catch(e) {}
+    });
+  });
+  [ch2, ch3, ch4].forEach(function(ch) {
+    ch.subscribeCrosshairMove(function(p) {
+      if (!p.time) return;
+      var idx = rows.findIndex(function(r) { return r.time === p.time; });
+      if (idx < 0) return;
+      updateInfo(idx);
+      try { ch1.setCrosshairPosition(p.point.x, Object.values(p.seriesData)[0] && Object.values(p.seriesData)[0].value); } catch(e) {}
+    });
+  });
+}
+
+document.querySelectorAll('.ptab').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.ptab').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    _curPeriod = btn.dataset.p;
+    _zoomRatio = 1.0; _panX = 0;
+    loadChart();
+  });
+});
+
+</script>
+</body>
+</html>
