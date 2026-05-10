@@ -15,7 +15,7 @@ strategy_files = {
     '填坑': today_dir / 'result_填坑.txt',
     '大波浪': today_dir / 'result_大波浪.txt',
     '红悬停': today_dir / 'result_红悬停.txt',
-    '业绩稳增': today_dir / 'result_业绩稳增.txt',
+    '高业绩': today_dir / 'result_高业绩.txt',
 }
 
 stocks = []
@@ -44,8 +44,8 @@ by_strat = {}
 for code, strat in stocks:
     by_strat.setdefault(strat, []).append(code)
 
-icons = {'补票': '📈', 'TePu': '📊', '填坑': '🕳️', '大波浪': '🌊', '红悬停': '🔴', '业绩稳增': '💰'}
-alias = {'补票': '补票战法', 'TePu': 'TePu战法', '填坑': '填坑战法', '大波浪': '大波浪战法', '红悬停': '红悬停战法', '业绩稳增': '业绩稳增战法'}
+icons = {'补票': '📈', 'TePu': '📊', '填坑': '🕳️', '大波浪': '🌊', '红悬停': '🔴', '高业绩': '💰'}
+alias = {'补票': '补票龙', 'TePu': 'TePu龙', '填坑': '填坑龙', '大波浪': '大波浪龙', '红悬停': '红悬停龙', '高业绩': '高业绩龙'}
 
 def get_result_count():
     counts = {}
@@ -112,7 +112,7 @@ for strat, codes in by_strat.items():
     name = alias.get(strat, strat)
     cnt = counts.get(strat, len(codes))
     html += f'<div class="group">\n'
-    html += f'<div class="ghdr" onclick="toggleGroup(this)"><span class="gname">{icon} {name}</span><span class="gcnt">{cnt}</span></div>\n'
+    html += f'<div class="ghdr" onclick="toggleGroup(this)"><span class="gname">{name}</span><span class="gcnt">{cnt}</span></div>\n'
     html += '<div class="stocks">\n'
     for code in codes:
         cname = name_map.get(code, code)
