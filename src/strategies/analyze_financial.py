@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 财务选股：同时满足年报+Q1+Q2+Q3 同比连续2年增速≥25%，净利润+EPS同时满足，最新一期必须为正
-支持 --out-dir 参数，将股票代码列表输出到 result_业绩稳增.txt
+支持 --out-dir 参数，将股票代码列表输出到 result_高业绩.txt
 """
 
 from __future__ import annotations
@@ -150,10 +150,10 @@ def main(out_dir: Path | None = None):
     logger.info("=" * 60)
     logger.info("筛选结果：共 %d 支股票同时满足年报+Q1+Q2+Q3 连续2年增速均≥25%%", len(results))
 
-    # 输出股票代码到 result_业绩稳增.txt
+    # 输出股票代码到 result_高业绩.txt
     if out_dir:
         out_dir.mkdir(parents=True, exist_ok=True)
-        result_txt = out_dir / "result_业绩稳增.txt"
+        result_txt = out_dir / "result_高业绩.txt"
         with open(result_txt, 'w', encoding='utf-8') as f:
             for code, _ in results:
                 f.write(code + '\n')
