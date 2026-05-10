@@ -8,7 +8,7 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden;background:#111;font-family:'PingFang SC','Microsoft YaHei',sans-serif}
 .wrap{display:flex;height:100vh}
-.sidebar{width:80px;background:#1a1a2e;border-right:1px solid #2a2a3e;overflow-y:auto;flex-shrink:0;transition:width .25s}.sidebar.collapsed{width:0;overflow:hidden}
+.sidebar{width:85px;background:#1a1a2e;border-right:1px solid #2a2a3e;overflow-y:auto;flex-shrink:0;transition:width .25s}.sidebar.collapsed{width:0;overflow:hidden}
 .sidebar h2{font-size:11px;color:#666;padding:6px 8px 4px;font-weight:400}
 .group{margin-bottom:4px}
 .ghdr{padding:4px 4px 4px 8px;font-size:11px;color:#ccc;cursor:pointer;user-select:none;display:flex;align-items:center;gap:4px;margin-right:2px}
@@ -207,7 +207,7 @@ html,body{height:100%;overflow:hidden;background:#111;font-family:'PingFang SC',
 
   <div class="main">
     <div class="topbar">
-      <span id="sidebar-arrow" onclick="toggleSidebar()" style="cursor:pointer;font-size:16px;color:#888;margin-right:10px;flex-shrink:0" title="展开/收起侧栏">&#x25C0;</span>
+      <span id="sidebar-arrow" onclick="toggleSidebar()" style="cursor:pointer;font-size:12px;color:#888;margin-right:10px;flex-shrink:0" title="展开/收起侧栏">&#x25C0;</span>
       <div>
         <div class="stk-title" id="title-name">--</div>
         <div class="stk-sub" id="title-code">--</div>
@@ -217,7 +217,7 @@ html,body{height:100%;overflow:hidden;background:#111;font-family:'PingFang SC',
         <button class="ptab" data-p="W" onclick="setPeriod('W')">周K</button>
         <button class="ptab" data-p="M" onclick="setPeriod('M')">月K</button>
       </div>
-      <div style="display:flex;gap:4px;margin-left:8px">
+      <div style="display:flex;gap:4px">
         <button onclick="prevStock()" style="background:#252540;border:none;color:#888;cursor:pointer;padding:4px 10px;border-radius:4px;font-size:12px" title="上一只">&#x25C0;</button>
         <button onclick="nextStock()" style="background:#252540;border:none;color:#888;cursor:pointer;padding:4px 10px;border-radius:4px;font-size:12px" title="下一只">&#x25B6;</button>
       </div>
