@@ -9,7 +9,7 @@ document.getElementById('etfCard').addEventListener('click', function() {
 });
 
 function goStock() {
-  var url = _selDate === 'today' ? 'stock.html' : 'stock.html?date=' + _selDate;
+  var url = _selDate === 'today' ? 'stock.html?v=210531' : 'stock.html?date=' + _selDate + '&v=210531';
   window.location.href = url;
 }
 

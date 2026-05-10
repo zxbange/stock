@@ -79,4 +79,15 @@ python3 "$SRC/generators/gen_notification.py"
 echo "[$(date)] 生成 dates.json..."
 python3 "$SRC/generators/gen_index.py"
 
+# ========== 步骤7：更新股票中文名表 ==========
+echo "[$(date)] 更新股票中文名表..."
+python3 -c "
+import tushare as ts, json
+pro = ts.pro_api()
+df = pro.stock_basic(list_status='L', fields='ts_code,name')
+names = dict(zip(df['ts_code'], df['name']))
+with open('$PROJECT_ROOT/frontend/stock_names.json', 'w', encoding='utf-8') as f:
+    json.dump(names, f, ensure_ascii=False)
+print(f'更新了 {len(names)} 只股票的中文名')"
+
 echo "[$(date)] 全部完成"

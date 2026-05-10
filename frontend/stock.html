@@ -2,6 +2,9 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>K线精选 · 股票K线</title>
 <link rel="stylesheet" href="css/kline.css">
@@ -14,19 +17,18 @@
   </div>
   <div class="main">
     <div class="topbar">
-      <span id="sidebar-arrow" onclick="toggleSidebar()" style="cursor:pointer;font-size:12px;color:#888;margin-right:10px;flex-shrink:0" title="展开/收起侧栏">&#x25C0;</span>
-      <div>
+      <span id="sidebar-arrow" onclick="toggleSidebar()" style="cursor:pointer;font-size:12px;color:#888;margin-right:8px;flex-shrink:0" title="展开/收起侧栏">&#x25C0;</span>
+      <div style="margin-right:auto">
         <div class="stk-title" id="title-name">--</div>
         <div class="stk-sub" id="title-code">--</div>
       </div>
-      <button onclick="prevStock()" style="background:#252540;border:none;color:#888;cursor:pointer;padding:4px 10px;border-radius:4px;font-size:12px" title="上一只">&#x25C0;</button>
-      <button onclick="nextStock()" style="background:#252540;border:none;color:#888;cursor:pointer;padding:4px 10px;border-radius:4px;font-size:12px" title="上一只">&#x25B6;</button>
       <div class="period-tabs">
         <button class="ptab active" data-p="D" onclick="setPeriod('D')">日K</button>
         <button class="ptab" data-p="W" onclick="setPeriod('W')">周K</button>
         <button class="ptab" data-p="M" onclick="setPeriod('M')">月K</button>
       </div>
-      <span id="debug-info" style="font-size:10px;color:#555;margin-left:8px;"></span>
+      <button onclick="prevStock()" style="background:#252540;border:none;color:#888;cursor:pointer;padding:4px 10px;border-radius:4px;font-size:12px;margin-left:8px" title="上一只">&#x25C0;</button>
+      <button onclick="nextStock()" style="background:#252540;border:none;color:#888;cursor:pointer;padding:4px 10px;border-radius:4px;font-size:12px" title="下一只">&#x25B6;</button>
     </div>
     <div class="charts">
       <div class="chart-pane" id="p1">

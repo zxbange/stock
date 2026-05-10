@@ -10,6 +10,15 @@ var _maColors = {5:'#ffea00',10:'#ff9800',20:'#00bcd4',30:'#e040fb',60:'#00e676'
 var _maLines = {};
 
 var _allStocks = [];  // [{code, name, strat}]
+var _stockNames = {};
+
+// 加载股票中文名
+(function() {
+  fetch('/stock_names.json?v=210531').then(function(r) { return r.json(); })
+  .then(function(names) {
+    _stockNames = names;
+  }).catch(function() {});
+})();
 
 // 解析 URL 参数 ?date=YYYYMMDD，支撑历史日期查看
 var _baseDir = '/today/';
@@ -20,7 +29,7 @@ var _viewDate = null;
     _viewDate = q[1];
     _baseDir = '/' + _viewDate + '/';
   }
-  document.getElementById('debug-info').textContent = 'ver=' + window._appver + ' base=' + _baseDir;
+  // debug removed
 })();
 
 var _alias = {
@@ -74,7 +83,7 @@ function buildSidebar(byStrat) {
     html += '<div class="ghdr" onclick="toggleGroup(this)"><span class="gname">' + name + '</span><span class="gcnt">' + codes.length + '</span></div>';
     html += '<div class="stocks">';
     codes.forEach(function(code) {
-      var cname = code; // 暂时用code，name稍后通过tushare补全
+      var cname = _stockNames[code] || code;
       _allStocks.push({code: code, name: cname, strat: strat});
       html += '<div class="stk" data-code="' + code + '" onclick="selectStock(this,\'' + code + '\')">';
       html += '<div class="sname">' + cname + '</div>';
@@ -332,5 +341,13 @@ document.addEventListener('DOMContentLoaded', function() {
       el.appendChild(info);
     }
   });
-  loadSidebar();
+  // 先等股票名加载完，再构建侧栏
+  function tryLoad() {
+    if (Object.keys(_stockNames).length > 0) {
+      loadSidebar();
+    } else {
+      setTimeout(tryLoad, 50);
+    }
+  }
+  tryLoad();
 });
