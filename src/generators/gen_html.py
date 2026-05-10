@@ -69,16 +69,16 @@ html = f"""<!DOCTYPE html>
 *{{box-sizing:border-box;margin:0;padding:0}}
 html,body{{height:100%;overflow:hidden;background:#111;font-family:'PingFang SC','Microsoft YaHei',sans-serif}}
 .wrap{{display:flex;height:100vh}}
-.sidebar{{width:160px;background:#1a1a2e;border-right:1px solid #2a2a3e;overflow-y:auto;flex-shrink:0;transition:width .25s}}.sidebar.collapsed{{width:0;overflow:hidden}}
-.sidebar h2{{font-size:13px;color:#888;padding:10px 12px 6px;font-weight:400}}
+.sidebar{{width:80px;background:#1a1a2e;border-right:1px solid #2a2a3e;overflow-y:auto;flex-shrink:0;transition:width .25s}}.sidebar.collapsed{{width:0;overflow:hidden}}
+.sidebar h2{{font-size:11px;color:#666;padding:6px 8px 4px;font-weight:400}}
 .group{{margin-bottom:4px}}
-.ghdr{{padding:6px 12px;font-size:13px;color:#fff;cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center}}
+.ghdr{{padding:4px 4px 4px 8px;font-size:11px;color:#ccc;cursor:pointer;user-select:none;display:flex;align-items:center;gap:4px;margin-right:2px}}
 .ghdr:hover{{background:#252540}}
 .ghdr .gname{{display:flex;align-items:center;gap:5px}}
 .ghdr .gcnt{{font-size:11px;color:#666;background:#252540;padding:1px 6px;border-radius:8px}}
 .stocks{{display:none;padding:2px 0}}
 .stocks.open{{display:block}}
-.stk{{padding:5px 12px 5px 28px;font-size:12px;color:#ccc;cursor:pointer;border-left:2px solid transparent}}
+.stk{{padding:3px 6px 3px 14px;font-size:11px;color:#ccc;cursor:pointer;border-left:2px solid transparent}}
 .stk:hover{{background:#252540;color:#fff}}
 .stk.active{{background:#252540;color:#ffea00;border-left-color:#ffea00}}
 .stk .sname{{}}
@@ -112,7 +112,7 @@ for strat, codes in by_strat.items():
     name = alias.get(strat, strat)
     cnt = counts.get(strat, len(codes))
     html += f'<div class="group">\n'
-    html += f'<div class="ghdr" onclick="toggleGroup(this)"><span class="gname">{name}</span><span class="gcnt">{cnt}</span></div>\n'
+    html += f'<div class="ghdr" onclick="toggleGroup(this)"><span class="gname">{name}</span><span style="font-size:11px;color:#666;margin-left:4px">{cnt}</span></div>\n'
     html += '<div class="stocks">\n'
     for code in codes:
         cname = name_map.get(code, code)
