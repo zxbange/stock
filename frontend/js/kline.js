@@ -15,20 +15,12 @@ var _allStocks = [];  // [{code, name, strat}]
 var _baseDir = '/today/';
 var _viewDate = null;
 (function() {
-  // 从 URL 路径解析日期，如 /20260508/ -> 20260508
-  var m = location.pathname.match(/^\/([0-9]{8})\/?$/);
-  if (m) {
-    _viewDate = m[1];
+  var q = location.search.match(/date=([0-9]{8})/);
+  if (q) {
+    _viewDate = q[1];
     _baseDir = '/' + _viewDate + '/';
   }
-  // 兜底：URL 参数
-  if (!_viewDate) {
-    var q = location.search.match(/date=([0-9]{8})/);
-    if (q) {
-      _viewDate = q[1];
-      _baseDir = '/' + _viewDate + '/';
-    }
-  }
+  document.getElementById('debug-info').textContent = 'ver=' + window._appver + ' base=' + _baseDir;
 })();
 
 var _alias = {
