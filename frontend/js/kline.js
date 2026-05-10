@@ -11,6 +11,26 @@ var _maLines = {};
 
 var _allStocks = [];  // [{code, name, strat}]
 
+// 解析 URL 参数 ?date=YYYYMMDD，支撑历史日期查看
+var _baseDir = '/today/';
+var _viewDate = null;
+(function() {
+  // 从 URL 路径解析日期，如 /20260508/ -> 20260508
+  var m = location.pathname.match(/^\/([0-9]{8})\/?$/);
+  if (m) {
+    _viewDate = m[1];
+    _baseDir = '/' + _viewDate + '/';
+  }
+  // 兜底：URL 参数
+  if (!_viewDate) {
+    var q = location.search.match(/date=([0-9]{8})/);
+    if (q) {
+      _viewDate = q[1];
+      _baseDir = '/' + _viewDate + '/';
+    }
+  }
+})();
+
 var _alias = {
   '补票': '补票龙', 'TePu': 'TePu龙', '填坑': '填坑龙',
   '大波浪': '大波浪龙', '红悬停': '红悬停龙', '高业绩': '高业绩龙'
@@ -26,7 +46,7 @@ function loadSidebar() {
   var byStrat = {};
 
   strats.forEach(function(strat) {
-    fetch('/today/result_' + strat + '.txt').then(function(r) {
+    fetch(_baseDir + 'result_' + strat + '.txt').then(function(r) {
       if (!r.ok) return [];
       return r.text();
     }).then(function(text) {
@@ -190,7 +210,7 @@ function syncResize() {
 function loadData(code, period) {
   var file = period === 'D' ? code + '.json' : code + '_' + period.toLowerCase() + '.json';
   document.getElementById('loading').classList.add('show');
-  fetch('/today/indicators/' + file).then(function(r) {
+  fetch(_baseDir + 'indicators/' + file).then(function(r) {
     if (!r.ok) throw new Error('HTTP ' + r.status);
     return r.json();
   }).then(function(data) {

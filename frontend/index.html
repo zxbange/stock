@@ -12,8 +12,11 @@
     <h1>K线精选</h1>
     <p>六大战法选股 · 每日收盘后自动更新</p>
   </div>
-  <div class="date-bar" id="dateBar">
-    <button class="date-btn active" data-date="today">今日</button>
+  <div class="date-row">
+    <span class="date-label">查看日期</span>
+    <select id="dateSelect" class="date-select">
+      <option value="today">今日</option>
+    </select>
   </div>
   <div class="cards">
     <div class="card" id="stockCard" onclick="goStock()">
