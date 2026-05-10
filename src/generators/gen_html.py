@@ -92,7 +92,7 @@ html,body{{height:100%;overflow:hidden;background:#111;font-family:'PingFang SC'
 .ptab.active{{background:#ffea00;color:#111;font-weight:bold}}
 #panes{{display:flex;flex-direction:column;flex:1;min-height:0}}
 .pane{{position:relative;min-height:0;flex-shrink:0;background:#111122}}
-#p1{{height:500px;border-bottom:1px solid #1e1e2e}}
+#p1{{height:430px;border-bottom:1px solid #1e1e2e}}
 #p2{{height:100px;border-bottom:1px solid #1e1e2e}}
 #p3{{height:100px;border-bottom:1px solid #1e1e2e}}
 #p4{{height:100px}}
@@ -147,6 +147,7 @@ html += """  </div>
 <script>
 // Four chart instances
 var ch1 = null, ch2 = null, ch3 = null, ch4 = null;
+var _rows = null, _ind = null;  // for crosshair access
 var cd1 = null, vl = null, difL = null, deaL = null, macdB = null, kL = null, dL = null, jL = null;
 var _curCode = null, _curPeriod = 'D';
 var _sidebarCollapsed = false;
@@ -159,14 +160,14 @@ function createCharts() {
   if (ch1 !== null) return; // already created
 
   var w = document.getElementById('p1').clientWidth || 800;
-  var h1 = 500, h2 = 100, h3 = 100, h4 = 100;
+  var h1 = 430, h2 = 100, h3 = 100, h4 = 100;
 
   // K线 chart
   ch1 = LightweightCharts.createChart(document.getElementById('p1'), {
     width: w, height: h1,
     layout: { background: { color: '#111122' }, textColor: '#888' },
     grid: { vertLines: { color: '#1e1e2e' }, horzLines: { color: '#1e1e2e' } },
-    rightPriceScale: { borderVisible: false },
+    rightPriceScale: { borderVisible: false, visible: false },
     timeScale: { borderVisible: false, timeVisible: true },
     crosshair: { mode: LightweightCharts.CrosshairMode.Normal }
   });
@@ -189,7 +190,7 @@ function createCharts() {
     width: w, height: h2,
     layout: { background: { color: '#111122' }, textColor: '#888' },
     grid: { vertLines: { color: '#1e1e2e' }, horzLines: { color: '#1e1e2e' } },
-    rightPriceScale: { borderVisible: false },
+    rightPriceScale: { borderVisible: false, visible: false },
     timeScale: { borderVisible: false }
   });
   vl = ch2.addHistogramSeries({
@@ -202,7 +203,7 @@ function createCharts() {
     width: w, height: h3,
     layout: { background: { color: '#111122' }, textColor: '#888' },
     grid: { vertLines: { color: '#1e1e2e' }, horzLines: { color: '#1e1e2e' } },
-    rightPriceScale: { borderVisible: false },
+    rightPriceScale: { borderVisible: false, visible: false },
     timeScale: { borderVisible: false }
   });
   difL = ch3.addLineSeries({ color: '#ff9800', lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
@@ -214,7 +215,7 @@ function createCharts() {
     width: w, height: h4,
     layout: { background: { color: '#111122' }, textColor: '#888' },
     grid: { vertLines: { color: '#1e1e2e' }, horzLines: { color: '#1e1e2e' } },
-    rightPriceScale: { borderVisible: false },
+    rightPriceScale: { borderVisible: false, visible: false },
     timeScale: { borderVisible: false }
   });
   kL = ch4.addLineSeries({ color: '#ffea00', lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
@@ -229,12 +230,45 @@ function createCharts() {
       try { ch4.timeScale().setVisibleLogicalRange(range); } catch(e) {}
     }
   });
+
+  // Crosshair: update info panels on mouse move
+  ch1.subscribeCrosshairMove(function(param) {
+    if (!param.time || !_rows) return;
+    var idx = -1;
+    for (var i = 0; i < _rows.length; i++) { if (_rows[i].time === param.time) { idx = i; break; } }
+    if (idx < 0) return;
+    var r = _rows[idx], ind = _ind, N = _rows.length;
+    var prev = idx > 0 ? _rows[idx-1] : r;
+    var pct = ((r.c - prev.c) / prev.c * 100);
+    var pctStr = (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%';
+    var pctCls = pct >= 0 ? '#ef5350' : '#26a69a';
+    // Pane 1
+    var info1 = '<div>收:<span style="color:#fff">' + f2(r.c) + '</span> 开:' + f2(r.o) + ' 高:' + f2(r.h) + ' 低:' + f2(r.l) + ' <span style="color:' + pctCls + '">' + pctStr + ' (涨幅)</span></div><div>';
+    _maWindows.forEach(function(n) {
+      var v = ind['ma' + n] ? ind['ma' + n][idx] : null;
+      info1 += '<span style="color:' + _maColors[n] + '">MA' + n + ':' + f2(v) + '</span> ';
+    });
+    info1 += '</div>';
+    document.getElementById('info1').innerHTML = info1;
+    // Pane 2
+    document.getElementById('info2').innerHTML = '<div>成交量 <span style="color:#fff">' + fv(r.v||0) + '</span></div>';
+    // Pane 3 MACD
+    if (ind.dif) {
+      var dL = ind.dif[idx], deaL = ind.dea[idx], mL = ind.macd ? ind.macd[idx] : null;
+      document.getElementById('info3').innerHTML = '<div>DIF:<span style="color:#ff9800">' + f2(dL) + '</span> DEA:<span style="color:#00bcd4">' + f2(deaL) + '</span> MACD:<span style="color:#fff">' + f2(mL) + '</span></div>';
+    }
+    // Pane 4 KDJ
+    if (ind.K) {
+      var kL = ind.K[idx], dL2 = ind.D[idx], jL2 = ind.J ? ind.J[idx] : null;
+      document.getElementById('info4').innerHTML = '<div>K:<span style="color:#ffea00">' + f2(kL) + '</span> D:<span style="color:#ff9800">' + f2(dL2) + '</span> J:<span style="color:#e040fb">' + f2(jL2) + '</span></div>';
+    }
+  });
 }
 
 function syncResize() {
   if (!ch1) { createCharts(); return; }
   var w = document.getElementById('p1').clientWidth || 800;
-  ch1.resize(w, 500);
+  ch1.resize(w, 430);
   ch2.resize(w, 100);
   ch3.resize(w, 100);
   ch4.resize(w, 100);
@@ -262,6 +296,7 @@ function f2(v) { return v == null ? '--' : v.toFixed(2); }
 function fv(v) { return v == null ? '--' : (v >= 10000 ? (v/10000).toFixed(0) + '万' : v.toFixed(0)); }
 
 function render(rows, ind, period) {
+  _rows = rows; _ind = ind;
   var N = rows.length;
   var last = rows[N-1];
   var prev = rows[N-2] || last;
@@ -293,7 +328,7 @@ function render(rows, ind, period) {
 
   // === Pane 2: Volume ===
   vl.setData(rows.map(function(r) {
-    return { time: r.time, value: r.v || 0, color: r.c >= r.o ? '#ef535050' : '#26a69a50' };
+    return { time: r.time, value: r.v || 0, color: r.c >= r.o ? '#ef5350' : '#26a69a' };
   }));
   document.getElementById('info2').innerHTML = '<div>成交量 <span style="color:#fff">' + fv(last.v || 0) + '</span></div>';
 
