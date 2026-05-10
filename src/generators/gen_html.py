@@ -1,0 +1,313 @@
+#!/usr/bin/env python3
+"""生成股票K线页面 - 纯净专业版（东方财富风格）"""
+import os, re, json
+from datetime import datetime
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+today_dir = PROJECT_ROOT / 'daily_result' / 'today'
+today_dir.mkdir(parents=True, exist_ok=True)
+IND_DIR = today_dir / 'indicators'
+
+strategy_files = {
+    '补票': today_dir / 'result_补票.txt',
+    'TePu': today_dir / 'result_TePu.txt',
+    '填坑': today_dir / 'result_填坑.txt',
+    '大波浪': today_dir / 'result_大波浪.txt',
+    '红悬停': today_dir / 'result_红悬停.txt',
+    '业绩稳增': today_dir / 'result_业绩稳增.txt',
+}
+
+stocks = []
+for strat, fpath in strategy_files.items():
+    if fpath.exists():
+        with open(fpath) as f:
+            lines = [l.strip() for l in f]
+        codes = [l for l in lines if re.match(r'^\d{6}\.(?:SZ|SH|BJ)$', l)]
+        for code in codes:
+            stocks.append((code, strat))
+
+name_map = {}
+try:
+    import tushare as ts
+    pro = ts.pro_api()
+    mdf = pro.stock_basic(exchange='', list_status='L', fields='ts_code,name')
+    for _, row in mdf.iterrows():
+        name_map[row['ts_code']] = row['name']
+except Exception as e:
+    print(f"获取名称: {e}")
+for code, _ in stocks:
+    if code not in name_map:
+        name_map[code] = code
+
+by_strat = {}
+for code, strat in stocks:
+    by_strat.setdefault(strat, []).append(code)
+
+icons = {'补票': '📈', 'TePu': '📊', '填坑': '🕳️', '大波浪': '🌊', '红悬停': '🔴', '业绩稳增': '💰'}
+alias = {'补票': '补票战法', 'TePu': 'TePu战法', '填坑': '填坑战法', '大波浪': '大波浪战法', '红悬停': '红悬停战法', '业绩稳增': '业绩稳增战法'}
+
+def get_result_count():
+    counts = {}
+    for strat, fpath in strategy_files.items():
+        if fpath.exists():
+            with open(fpath) as f:
+                lines = [l.strip() for l in f]
+            counts[strat] = len([l for l in lines if re.match(r'^\d{6}\.(?:SZ|SH|BJ)$', l)])
+    return counts
+
+counts = get_result_count()
+total = sum(counts.values())
+
+html = f"""<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>K线精选 {datetime.now().strftime('%Y-%m-%d')}</title>
+<style>
+*{{box-sizing:border-box;margin:0;padding:0}}
+html,body{{height:100%;overflow:hidden;background:#111}}
+.wrap{{display:flex;height:100vh;font-family:'PingFang SC','Microsoft YaHei',sans-serif}}
+
+/* 左侧栏 */
+.sidebar{{width:160px;background:#1a1a2e;border-right:1px solid #2a2a3e;overflow-y:auto;flex-shrink:0}}
+.sidebar h2{{font-size:13px;color:#888;padding:10px 12px 6px;font-weight:400}}
+.group{{margin-bottom:4px}}
+.ghdr{{padding:6px 12px;font-size:13px;color:#fff;cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center}}
+.ghdr:hover{{background:#252540}}
+.ghdr .gname{{display:flex;align-items:center;gap:5px}}
+.ghdr .gcnt{{font-size:11px;color:#666;background:#252540;padding:1px 6px;border-radius:8px}}
+.stocks{{display:none;padding:2px 0}}
+.stocks.open{{display:block}}
+.stk{{padding:5px 12px 5px 28px;font-size:12px;color:#ccc;cursor:pointer;border-left:2px solid transparent}}
+.stk:hover{{background:#252540;color:#fff}}
+.stk.active{{background:#252540;color:#ffea00;border-left-color:#ffea00}}
+.stk .sname{{}}
+.stk .scode{{font-size:10px;color:#666;margin-top:1px}}
+
+/* 右侧主区 */
+.main{{flex:1;display:flex;flex-direction:column;min-width:0}}
+.topbar{{background:#1a1a2e;border-bottom:1px solid #2a2a3e;padding:8px 14px;display:flex;align-items:center;gap:16px;flex-shrink:0}}
+.stk-title{{font-size:15px;color:#fff;font-weight:bold}}
+.stk-sub{{font-size:11px;color:#666;margin-top:2px}}
+.period-tabs{{display:flex;gap:3px;margin-left:auto}}
+.ptab{{padding:4px 14px;font-size:12px;color:#888;background:#252540;border:none;border-radius:4px;cursor:pointer}}
+.ptab.active{{background:#ffea00;color:#111;font-weight:bold}}
+
+/* 图表区 */
+#chart-wrap{{flex:1;position:relative;min-height:0}}
+#loading{{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#555;font-size:13px;display:none;z-index:10}}
+#loading.show{{display:block}}
+#legend{{position:absolute;top:8px;left:12px;z-index:5;font-size:11px;color:#aaa;pointer-events:none;line-height:1.8}}
+#legend .row{{margin-bottom:2px}}
+#legend .label{{color:#888}}
+#legend .val{{color:#fff;margin-left:4px}}
+#legend .pct{{margin-left:6px}}
+#legend .pct.up{{color:#ef5350}}
+#legend .pct.dn{{color:#26a69a}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="sidebar">
+    <h2>K线精选 · {total}只</h2>
+"""
+
+for strat, codes in by_strat.items():
+    icon = icons.get(strat, '📌')
+    name = alias.get(strat, strat)
+    cnt = counts.get(strat, len(codes))
+    html += f'<div class="group">\n'
+    html += f'<div class="ghdr" onclick="toggleGroup(this)"><span class="gname">{icon} {name}</span><span class="gcnt">{cnt}</span></div>\n'
+    html += '<div class="stocks">\n'
+    for code in codes:
+        cname = name_map.get(code, code)
+        html += f'<div class="stk" data-code="{code}" onclick="selectStock(this,\'{code}\')"><div class="sname">{cname}</div><div class="scode">{code}</div></div>\n'
+    html += '</div>\n</div>\n'
+
+html += """  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="stk-title" id="title-name">--</div>
+        <div class="stk-sub" id="title-code">--</div>
+      </div>
+      <div class="period-tabs">
+        <button class="ptab active" data-p="D" onclick="setPeriod('D')">日K</button>
+        <button class="ptab" data-p="W" onclick="setPeriod('W')">周K</button>
+        <button class="ptab" data-p="M" onclick="setPeriod('M')">月K</button>
+      </div>
+    </div>
+    <div id="chart-wrap">
+      <div id="loading">加载中...</div>
+      <div id="legend"></div>
+      <div id="chart" style="width:100%;height:100%"></div>
+    </div>
+  </div>
+</div>
+<script src="lightweight-charts.standalone.production.js"></script>
+<script>
+var chart = null;
+var candlestickSeries = null;
+var volSeries = null;
+var maSeries = {};
+var _curCode = null;
+var _curPeriod = 'D';
+var _maWindows = [5,10,20,30,60];
+var _maColors = {5:'#ffea00',10:'#ff9800',20:'#00bcd4',30:'#e040fb',60:'#00e676'};
+
+function initChart() {
+  if (chart) { chart.remove(); chart = null; }
+  var wrap = document.getElementById('chart-wrap');
+  var h = wrap.clientHeight;
+  var w = wrap.clientWidth;
+  chart = LightweightCharts.createChart(document.getElementById('chart'), {
+    width: w, height: h,
+    layout: { background: { color: '#111122' }, textColor: '#888' },
+    grid: { vertLines: { color: '#1e1e2e' }, horzLines: { color: '#1e1e2e' } },
+    rightPriceScale: { borderVisible: false },
+    timeScale: { borderVisible: false, timeVisible: true },
+    crosshair: { mode: LightweightCharts.CrosshairMode.Normal }
+  });
+  candlestickSeries = chart.addCandlestickSeries({
+    upColor: '#ef5350', downColor: '#26a69a',
+    borderUpColor: '#ef5350', borderDownColor: '#26a69a',
+    wickUpColor: '#ef5350', wickDownColor: '#26a69a'
+  });
+  volSeries = chart.addHistogramSeries({
+    priceFormat: { type: 'volume' },
+    priceScaleId: 'vol'
+  });
+  chart.priceScale('vol').applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
+  _maWindows.forEach(function(n) {
+    maSeries[n] = chart.addLineSeries({ color: _maColors[n], lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
+  });
+  // Resize listener
+  window.addEventListener('resize', function() {
+    if (chart) chart.resize(document.getElementById('chart-wrap').clientWidth, document.getElementById('chart-wrap').clientHeight);
+  });
+}
+
+function loadData(code, period) {
+  var file = period === 'D' ? code + '.json' : code + '_' + period.toLowerCase() + '.json';
+  document.getElementById('loading').classList.add('show');
+  fetch('indicators/' + file).then(function(r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }).then(function(data) {
+    document.getElementById('loading').classList.remove('show');
+    var rows = data.kline || data.rows;
+    var ind = data.ind || data.indicators;
+    if (!rows || !ind) { alert('数据格式错误'); return; }
+    render(rows, ind, period);
+  }).catch(function(e) {
+    document.getElementById('loading').classList.remove('show');
+    alert('加载失败: ' + e.message);
+  });
+}
+
+function render(rows, ind, period) {
+  // Update legend
+  var last = rows[rows.length - 1];
+  var prev = rows[rows.length - 2] || last;
+  var pct = ((last.c - prev.c) / prev.c * 100);
+  var pctStr = (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%';
+  var pctCls = pct >= 0 ? 'up' : 'dn';
+  var leg = '<div class="row"><span class="label">收盘</span><span class="val">' + last.c.toFixed(2) + '</span>' +
+    '<span class="pct ' + pctCls + '">' + pctStr + ' (涨幅)</span></div>';
+  leg += '<div class="row"><span class="label">开盘</span><span class="val">' + last.o.toFixed(2) + '</span>' +
+    '<span class="label" style="margin-left:10px">高</span><span class="val">' + last.h.toFixed(2) + '</span>' +
+    '<span class="label" style="margin-left:10px">低</span><span class="val">' + last.l.toFixed(2) + '</span></div>';
+  // MA values
+  var maRows = [
+    ['MA5', ind.ma5], ['MA10', ind.ma10], ['MA20', ind.ma20],
+    ['MA30', ind.ma30], ['MA60', ind.ma60]
+  ];
+  maRows.forEach(function(m) {
+    var v = m[1][rows.length - 1];
+    if (v != null) {
+      leg += '<div class="row"><span class="label" style="color:' + _maColors[m[0]] + '">' + m[0] + '</span><span class="val">' + v.toFixed(2) + '</span></div>';
+    }
+  });
+  document.getElementById('legend').innerHTML = leg;
+
+  // Set candlestick data
+  candlestickSeries.setData(rows.map(function(r) {
+    return { time: r.time, open: r.o, high: r.h, low: r.l, close: r.c };
+  }));
+  // Volume
+  volSeries.setData(rows.map(function(r) {
+    return { time: r.time, value: r.v, color: r.c >= r.o ? '#ef535066' : '#26a69a66' };
+  }));
+  // MA lines
+  _maWindows.forEach(function(n) {
+    var key = 'ma' + n;
+    if (ind[key]) {
+      maSeries[n].setData(rows.map(function(r, i) {
+        return { time: r.time, value: ind[key][i] };
+      }).filter(function(d) { return d.value != null; }));
+    }
+  });
+  chart.timeScale().fitContent();
+}
+
+function selectStock(el, code) {
+  document.querySelectorAll('.stk').forEach(function(s) { s.classList.remove('active'); });
+  el.classList.add('active');
+  _curCode = code;
+  var name = el.querySelector('.sname').textContent;
+  var code2 = el.querySelector('.scode').textContent;
+  document.getElementById('title-name').textContent = name;
+  document.getElementById('title-code').textContent = code2;
+  loadData(code, _curPeriod);
+}
+
+function setPeriod(p) {
+  _curPeriod = p;
+  document.querySelectorAll('.ptab').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.p === p);
+  });
+  if (_curCode) loadData(_curCode, p);
+}
+
+function toggleGroup(el) {
+  var stocks = el.nextElementSibling;
+  stocks.classList.toggle('open');
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', function() {
+  initChart();
+  // Auto-open first group
+  var firstGroup = document.querySelector('.stocks');
+  if (firstGroup) firstGroup.classList.add('open');
+  // Select first stock
+  var firstStk = document.querySelector('.stk');
+  if (firstStk) {
+    selectStock(firstStk, firstStk.dataset.code);
+  }
+});
+</script>
+</body>
+</html>
+"""
+
+out_path = today_dir / 'index.html'
+with open(out_path, 'w') as f:
+    f.write(html)
+
+# Copy lightweight-charts if not exists
+lc_src = PROJECT_ROOT / 'data_etf' / 'lightweight-charts.standalone.production.js'
+lc_dst = today_dir / 'lightweight-charts.standalone.production.js'
+if lc_src.exists() and not lc_dst.exists():
+    import shutil
+    shutil.copy(lc_src, lc_dst)
+if not lc_dst.exists() and (PROJECT_ROOT / 'frontend' / 'lightweight-charts.standalone.production.js').exists():
+    import shutil
+    shutil.copy(PROJECT_ROOT / 'frontend' / 'lightweight-charts.standalone.production.js', lc_dst)
+
+print(f"生成完成: {out_path}")
+for strat, cnt in counts.items():
+    print(f"  {alias.get(strat,strat)}: {cnt}只")
