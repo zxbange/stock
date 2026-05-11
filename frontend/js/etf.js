@@ -4,6 +4,7 @@ var _rows = null, _ind = null;
 var cd1 = null, vl = null, difL = null, deaL = null, macdB = null, kL = null, dL = null, jL = null;
 var _curCode = null, _curPeriod = 'D';
 var _sidebarCollapsed = false;
+var _benchData = null;  // 存储完整的etf列表数据，用于搜索过滤
 
 var _maWindows = [5,10,20,30,60,120,240];
 var _maColors = {5:'#ffea00',10:'#ff9800',20:'#00bcd4',30:'#e040fb',60:'#00e676',120:'#888888',240:'#666666'};
@@ -27,11 +28,17 @@ var _etfBaseDir = '';
 function loadSidebar() {
   fetch(_baseDir + 'etf_list.json').then(function(r) { return r.json(); })
   .then(function(benchData) {
+    _benchData = benchData;
+    window._benchData = benchData;
     buildSidebarETF(benchData);
+    document.getElementById('etfSearch').addEventListener('input', function() {
+      buildSidebarETF(_benchData, this.value.trim());
+    });
   }).catch(function() {});
 }
 
-function buildSidebarETF(benchData) {
+function buildSidebarETF(benchData, searchText) {
+  var search = (searchText || '').toLowerCase();
   var html = '';
   var totalCnt = 0;
 
@@ -44,24 +51,37 @@ function buildSidebarETF(benchData) {
   benches.forEach(function(bench) {
     var list = benchData[bench];
     if (list.length === 0) return;
-    totalCnt += list.length;
+
+    // 搜索模式下：过滤出匹配项；非搜索模式：正常显示全量
+    var filteredList = list;
+    if (search) {
+      filteredList = list.filter(function(etf) {
+        return etf.ts_code.toLowerCase().includes(search) || etf.name.toLowerCase().includes(search);
+      });
+    }
+    if (filteredList.length === 0) return;
+
+    totalCnt += filteredList.length;
     var shortBench = bench.length > 55 ? bench.slice(0, 55) + '…' : bench;
     html += '<div class="group">';
-    html += '<div class="ghdr" onclick="toggleGroup(this)"><span class="gname">' + shortBench + '</span><span class="gcnt">' + list.length + '</span></div>';
+    html += '<div class="ghdr" onclick="toggleGroup(this)"><span class="gname">' + shortBench + '</span><span class="gcnt">' + filteredList.length + '</span></div>';
     html += '<div class="stocks">';
-    list.forEach(function(etf) {
+    filteredList.forEach(function(etf) {
       html += '<div class="stk" data-code="' + etf.ts_code + '" onclick="selectStock(this,\'' + etf.ts_code + '\')"><div class="sname">' + etf.name + '</div><div class="scode">' + etf.ts_code + '</div></div>';
     });
     html += '</div></div>';
   });
 
-  document.getElementById('sidebarTitle').innerHTML = 'ETF精选<br><span style="font-size:10px;color:#666">' + totalCnt + '只</span>';
-  document.getElementById('sidebarContent').innerHTML = html;
+  var label = search ? 'ETF精选<span style="font-size:10px;color:#888"> · 搜索:"' + search + '" · ' + totalCnt + '只</span>' : 'ETF精选<br><span style="font-size:10px;color:#666">' + totalCnt + '只</span>';
+  document.getElementById('sidebarTitle').innerHTML = label;
+  document.getElementById('sidebarContent').innerHTML = html || '<div style="padding:12px;color:#888;text-align:center">无匹配结果</div>';
 
-  var firstGroup = document.querySelector('.stocks');
-  if (firstGroup) firstGroup.classList.add('open');
-  var firstStk = document.querySelector('.stk');
-  if (firstStk) selectStock(firstStk, firstStk.dataset.code);
+  if (!search) {
+    var firstGroup = document.querySelector('.stocks');
+    if (firstGroup) firstGroup.classList.add('open');
+    var firstStk = document.querySelector('.stk');
+    if (firstStk) selectStock(firstStk, firstStk.dataset.code);
+  }
 }
 
 // ─── 图表创建 ───────────────────────────────────────────────────────────────
@@ -330,3 +350,4 @@ function fv(v) {
 function setInfo(id, html) { var el = document.getElementById(id); if (el) el.innerHTML = html; }
 
 window.addEventListener('DOMContentLoaded', function() { loadSidebar(); });
+window._searchETF = function(v) { if (window._benchData) buildSidebarETF(window._benchData, v); };

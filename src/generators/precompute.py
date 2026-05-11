@@ -15,6 +15,19 @@
 """
 import os, json, sys, glob, argparse, concurrent.futures, re
 import pandas as pd
+import tushare as ts
+import time
+
+
+def get_api():
+    token = ts.get_token()
+    pro = ts.pro_api(token)
+    return pro
+
+
+def rate_call(func, *args, **kwargs):
+    """带速率限制的API调用（precompute阶段，低频可复用）"""
+    return func(*args, **kwargs)  # 直接调，无严格限速
 
 DATA_DIR_STOCK = '/home/bange/stock/data_kline'
 DATA_DIR_ETF   = '/home/bange/stock/data_etf'
@@ -82,18 +95,55 @@ def load_csv_stock(code):
     return rows
 
 def load_csv_etf(code):
+    """加载ETF日K线，CSV格式：ts_code,date,pre_close,open,high,low,close,change,pct_chg,volume,amount,adj_factor
+    前复权公式: adj_price = raw_price × 当日因子 ÷ 最新因子
+    效果: 把分拆/折算前价格压缩到分拆后水平，K线自然连续。"""
     path = os.path.join(DATA_DIR_ETF, f'{code}.csv')
-    rows = []
+    if not os.path.exists(path):
+        return []
+
+    # 读取CSV（adj_factor在最后一列col 11）
+    rows_raw = []
     with open(path) as f:
-        next(f)
+        next(f)  # header
         for line in f:
             c = line.strip().split(',')
-            if len(c) < 10: continue
-            # 转换日期格式 YYYYMMDD -> YYYY-MM-DD
+            if len(c) < 11:
+                continue
             d = c[1]
             date_fmt = f"{d[:4]}-{d[4:6]}-{d[6:8]}"
-            rows.append({'time': date_fmt, 'o': float(c[2]), 'h': float(c[3]),
-                         'l': float(c[4]), 'c': float(c[5]), 'v': float(c[9])})
+            # adj_factor在col 11（索引11），无则默认为1.0
+            factor = float(c[11]) if len(c) > 11 and c[11] else 1.0
+            rows_raw.append({
+                'time': date_fmt,
+                'factor': factor,
+                'o': float(c[3]),
+                'h': float(c[4]),
+                'l': float(c[5]),
+                'c': float(c[6]),
+                'v': float(c[9]),
+            })
+
+    if not rows_raw:
+        return []
+
+    # 最新因子 = 最大因子（距今最近的日期）
+    latest_factor = max(r['factor'] for r in rows_raw) if rows_raw else 1.0
+    if latest_factor == 0:
+        latest_factor = 1.0
+
+    rows = []
+    for r in rows_raw:
+        f = r['factor']
+        rows.append({
+            'time': r['time'],
+            # 前复权: raw × factor ÷ latest_factor
+            'o': round(r['o'] * f / latest_factor, 4),
+            'h': round(r['h'] * f / latest_factor, 4),
+            'l': round(r['l'] * f / latest_factor, 4),
+            'c': round(r['c'] * f / latest_factor, 4),
+            'v': r['v'],
+        })
     return rows
 
 def aggregate(rows, freq):
