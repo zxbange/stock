@@ -92,7 +92,7 @@ function buildSidebar(byStrat) {
     html += '</div></div>\n';
   });
 
-  document.getElementById('sidebarTitle').textContent = 'K线精选 · ' + totalCnt + '只';
+  document.getElementById('sidebarTitle').innerHTML = 'K线精选<br><span style="font-size:10px;color:#666">' + totalCnt + '只</span>';
   document.getElementById('sidebarContent').innerHTML = html;
 
   // 自动展开第一组、选中第一只
@@ -180,8 +180,13 @@ function createCharts() {
     var pct = ((r.c - prev.c) / prev.c * 100);
     var pctStr = (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%';
     var pctCls = pct >= 0 ? '#ef5350' : '#26a69a';
-    var info1 = '<div>收:<span style="color:#fff">' + f2(r.c) + '</span> 开:' + f2(r.o) + ' 高:' + f2(r.h) + ' 低:' + f2(r.l) + ' <span style="color:' + pctCls + '">' + pctStr + ' (涨幅)</span></div><div>';
-    _maWindows.forEach(function(n) {
+    var info1 = '<div>收:<span style="color:#fff">' + f2(r.c) + '</span> 开:' + f2(r.o) + ' 高:' + f2(r.h) + ' 低:' + f2(r.l) + ' <span style="color:' + pctCls + '">涨幅∶' + pctStr + '</span></div><div>';
+    [5,10,20,30].forEach(function(n) {
+      var v = ind['ma' + n] ? ind['ma' + n][idx] : null;
+      info1 += '<span style="color:' + _maColors[n] + '">MA' + n + ':' + f2(v) + '</span> ';
+    });
+    info1 += '</div><div>';
+    [60,120,240].forEach(function(n) {
       var v = ind['ma' + n] ? ind['ma' + n][idx] : null;
       info1 += '<span style="color:' + _maColors[n] + '">MA' + n + ':' + f2(v) + '</span> ';
     });
@@ -237,8 +242,13 @@ function render(rows, ind, period) {
   var pctCls = pct >= 0 ? '#ef5350' : '#26a69a';
 
   // Pane 1
-  var info1 = '<div>收:<span style="color:#fff">' + f2(last.c) + '</span> 开:' + f2(last.o) + ' 高:' + f2(last.h) + ' 低:' + f2(last.l) + ' <span style="color:' + pctCls + '">' + pctStr + ' (涨幅)</span></div><div>';
-  _maWindows.forEach(function(n) {
+  var info1 = '<div>收:<span style="color:#fff">' + f2(last.c) + '</span> 开:' + f2(last.o) + ' 高:' + f2(last.h) + ' 低:' + f2(last.l) + ' <span style="color:' + pctCls + '">涨幅∶' + pctStr + '</span></div><div>';
+  [5,10,20,30].forEach(function(n) {
+    var v = ind['ma' + n] ? ind['ma' + n][N-1] : null;
+    info1 += '<span style="color:' + _maColors[n] + '">MA' + n + ':' + f2(v) + '</span> ';
+  });
+  info1 += '</div><div>';
+  [60,120,240].forEach(function(n) {
     var v = ind['ma' + n] ? ind['ma' + n][N-1] : null;
     info1 += '<span style="color:' + _maColors[n] + '">MA' + n + ':' + f2(v) + '</span> ';
   });

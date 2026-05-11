@@ -2,12 +2,12 @@
 html,body{height:100%;overflow:hidden;background:#111;font-family:'PingFang SC','Microsoft YaHei',sans-serif}
 .wrap{display:flex;height:100vh}
 .sidebar{width:85px;background:#1a1a2e;border-right:1px solid #2a2a3e;overflow-y:auto;flex-shrink:0;transition:width .25s}.sidebar.collapsed{width:0;overflow:hidden}
-.sidebar h2{font-size:11px;color:#666;padding:6px 8px 4px;font-weight:400}
+.sidebar h2{font-size:13px;color:#666;padding:6px 8px 2px;font-weight:400;line-height:1.5;text-align:center}
 .group{margin-bottom:4px}
-.ghdr{padding:4px 4px 4px 8px;font-size:11px;color:#ccc;cursor:pointer;user-select:none;display:flex;align-items:center;gap:4px;margin-right:2px}
+.ghdr{padding:3px 4px 3px 6px;font-size:11px;color:#ccc;cursor:pointer;user-select:none;display:flex;align-items:center;gap:4px;margin-right:2px;overflow:hidden}
 .ghdr:hover{background:#252540}
-.ghdr .gname{display:flex;align-items:center;gap:5px}
-.ghdr .gcnt{font-size:11px;color:#666;background:#252540;padding:1px 6px;border-radius:8px}
+.ghdr .gname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ghdr .gcnt{font-size:9px;color:#666;background:#252540;padding:1px 4px;border-radius:8px}
 .stocks{display:none;padding:2px 0}
 .stocks.open{display:block}
 .stk{padding:3px 6px 3px 14px;font-size:11px;color:#ccc;cursor:pointer;border-left:2px solid transparent}
