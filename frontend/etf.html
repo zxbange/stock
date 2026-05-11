@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ETF K线精选</title>
+<link rel="stylesheet" href="css/kline.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="sidebar">
+    <h2 id="sidebarTitle">ETF精选 · 加载中...</h2>
+    <div id="sidebarContent"></div>
+  </div>
+  <div class="main">
+    <div class="topbar">
+      <span id="sidebar-arrow" onclick="toggleSidebar()" style="cursor:pointer;font-size:12px;color:#888;margin-right:8px;flex-shrink:0" title="展开/收起侧栏">&#x25C0;</span>
+      <div style="margin-right:auto">
+        <div class="stk-title" id="title-name">--</div>
+        <div class="stk-sub" id="title-code">--</div>
+      </div>
+      <div class="period-tabs">
+        <button class="ptab active" data-p="D" onclick="setPeriod('D')">日K</button>
+        <button class="ptab" data-p="W" onclick="setPeriod('W')">周K</button>
+        <button class="ptab" data-p="M" onclick="setPeriod('M')">月K</button>
+      </div>
+      <button onclick="prevStock()" style="background:#252540;border:none;color:#888;cursor:pointer;padding:4px 10px;border-radius:4px;font-size:12px;margin-left:8px" title="上一只">&#x25C0;</button>
+      <button onclick="nextStock()" style="background:#252540;border:none;color:#888;cursor:pointer;padding:4px 10px;border-radius:4px;font-size:12px" title="下一只">&#x25B6;</button>
+    </div>
+    <div class="charts">
+      <div class="chart-pane" id="p1">
+        <div class="pane-info" id="info1"></div>
+      </div>
+      <div class="chart-pane" id="p2">
+        <div class="pane-info" id="info2"></div>
+        <div id="loading">加载中...</div>
+      </div>
+      <div class="chart-pane" id="p3">
+        <div class="pane-info" id="info3"></div>
+      </div>
+      <div class="chart-pane" id="p4">
+        <div class="pane-info" id="info4"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>window._appver='210531';</script>
+<script src="lightweight-charts.standalone.production.js?v=210531"></script>
+<script src="js/etf.js?v=210531"></script>
+</body>
+</html>
