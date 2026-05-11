@@ -89,7 +89,10 @@ def load_csv_etf(code):
         for line in f:
             c = line.strip().split(',')
             if len(c) < 10: continue
-            rows.append({'time': c[1], 'o': float(c[2]), 'h': float(c[3]),
+            # 转换日期格式 YYYYMMDD -> YYYY-MM-DD
+            d = c[1]
+            date_fmt = f"{d[:4]}-{d[4:6]}-{d[6:8]}"
+            rows.append({'time': date_fmt, 'o': float(c[2]), 'h': float(c[3]),
                          'l': float(c[4]), 'c': float(c[5]), 'v': float(c[9])})
     return rows
 
@@ -191,6 +194,8 @@ def collect_selected_codes():
     return sorted(codes)
 
 def run(source, mode, codes=None):
+    global OUT_DIR
+    OUT_DIR = os.path.join(TODAY_DIR, 'indicators_etf' if source == 'etf' else 'indicators')
     if codes is None:
         # 全量模式：从目录加载所有CSV
         if source == 'stock':

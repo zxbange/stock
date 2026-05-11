@@ -4,9 +4,7 @@ var sel = document.getElementById('dateSelect');
 sel.addEventListener('change', function() {
   _selDate = sel.value;
 });
-document.getElementById('etfCard').addEventListener('click', function() {
-  alert('ETF功能正在开发中...');
-});
+// ETF card uses onclick in HTML
 
 function goStock() {
   var url = _selDate === 'today' ? 'stock.html?v=210531' : 'stock.html?date=' + _selDate + '&v=210531';

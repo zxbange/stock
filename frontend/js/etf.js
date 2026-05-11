@@ -67,6 +67,7 @@ function buildSidebarETF(benchData) {
 // ─── 图表创建 ───────────────────────────────────────────────────────────────
 
 function createCharts() {
+  console.log('[etf] createCharts', !!ch1);
   var w = document.getElementById('p1').clientWidth;
   var h1 = 430, h2 = 100, h3 = 100, h4 = 100;
 
@@ -211,18 +212,26 @@ function createCharts() {
 function loadData(code, period) {
   var suffix = period === 'D' ? '' : '_' + period.toLowerCase();
   var url = _etfBaseDir + code + suffix + '.json';
-  fetch(url).then(function(r) { return r.json(); })
+  fetch(url).then(function(r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status + ' ' + url);
+    return r.json();
+  })
   .then(function(data) {
-    if (!data.rows || data.rows.length === 0) return;
+    console.log('[etf] loaded', url, 'rows:', (data.rows||[]).length, 'indKeys:', Object.keys(data.indicators||{}).slice(0,3).join(','));
+    if (!data.rows || data.rows.length === 0) { setInfo('info1', '<div style="color:#f44">空数据: ' + code + '</div>'); return; }
+    var ind = data.indicators || data.ind;
     _rows = data.rows;
-    _ind = data.ind;
-    render(data.rows, data.ind, period);
-  }).catch(function() {
-    setInfo('info1', '<div style="color:#f44">加载失败: ' + code + '</div>');
+    _ind = ind;
+    console.log('[etf] render rows:', data.rows.length, 'ind:', Object.keys(ind).join(','));
+    render(data.rows, ind, period);
+  }).catch(function(e) {
+    console.error('[etf] fetch error', url, e);
+    setInfo('info1', '<div style="color:#f44">加载失败 ' + url + '<br>' + e.message + '</div>');
   });
 }
 
 function render(rows, ind, period) {
+  console.log('[etf] render called rows:', rows.length, 'ind keys:', Object.keys(ind).join(','));
   var N = rows.length;
   var last = rows[N-1];
   var prev = N > 1 ? rows[N-2] : last;
