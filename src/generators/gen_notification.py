@@ -12,7 +12,7 @@ files = {
     '填坑': today_dir / 'result_填坑.txt',
     '大波浪': today_dir / 'result_大波浪.txt',
     '红悬停': today_dir / 'result_红悬停.txt',
-    '业绩稳增': today_dir / 'result_业绩稳增.txt',
+    '高业绩': today_dir / 'result_高业绩.txt',
 }
 
 data = {}
@@ -42,8 +42,8 @@ msg_parts.append("HONGXUANTI: " + ",".join(data['红悬停']))
 msg_parts.append("DABOLANG_COUNT: " + str(len(data['大波浪'])))
 db_codes = data['大波浪']
 msg_parts.append("DABOLANG: " + ",".join(db_codes[:10]) + ("..." if len(db_codes) > 10 else ""))
-msg_parts.append("YJZZ_COUNT: " + str(len(data['业绩稳增'])))
-msg_parts.append("YJZZ: " + ",".join(data['业绩稳增']))
+msg_parts.append("YJZZ_COUNT: " + str(len(data['高业绩'])))
+msg_parts.append("YJZZ: " + ",".join(data['高业绩']))
 msg_parts.append("TOTAL: " + str(total))
 
 msg = "\n".join(msg_parts)
@@ -52,4 +52,4 @@ Path('/tmp/stock_notifications').mkdir(parents=True, exist_ok=True)
 with open('/tmp/stock_notifications/stock_daily_result.txt', 'w') as f:
     f.write(msg)
 
-print("结果: 补票" + str(len(data['补票'])) + "只, TePu" + str(len(data['TePu'])) + "只, 填坑" + str(len(data['填坑'])) + "只, 红悬停" + str(len(data['红悬停'])) + "只, 大波浪" + str(len(data['大波浪'])) + "只, 业绩稳增" + str(len(data['业绩稳增'])) + "只")
+print("结果: 补票" + str(len(data['补票'])) + "只, TePu" + str(len(data['TePu'])) + "只, 填坑" + str(len(data['填坑'])) + "只, 红悬停" + str(len(data['红悬停'])) + "只, 大波浪" + str(len(data['大波浪'])) + "只, 高业绩" + str(len(data['高业绩'])) + "只")
