@@ -71,6 +71,26 @@ python3 "$SRC/strategies/analyze_financial.py" --out-dir "$TODAY_DIR"
 echo "[$(date)] 开始预计算指标..."
 python3 "$SRC/generators/precompute.py" --mode all --from-results
 
+# ═══════════════════════════════════════════════════════════════════
+# ETF K线数据处理流程（重要修复记录）
+#   1. get_etf_baostock.py: 必须加 adj='qfq' 参数下载（基金专用接口）
+#   2. load_csv_etf 列映射（CSV格式: ts_code,date,pre_close,open,high,low,close,change,pct_chg,volume,amount）:
+#        正确: o=c[3], h=c[4], l=c[5], c=c[6], v=c[9]
+#        错误: o=c[2], h=c[3], l=c[4], c=c[5]  （把pre_close/open/high/low全部读错了）
+#   3. 折算/拆分前复权: 用 fund_adj API 获取因子，最新因子/latest_factor 取距今最近日期对应的因子，不是max(factor)
+#   4. precompute.py run() 中 OUT_DIR 按 source 动态切换（etf→indicators_etf/, stock→indicators/）
+#   5. gen_etf_list.py 生成 today/etf_list.json，侧边栏按 benchmark 分组+按成交额排序
+# ═══════════════════════════════════════════════════════════════════
+
+echo "[$(date)] 下载ETF K线数据（adj='qfq'前复权）..."
+python3 "$SRC/data_fetch/get_etf_baostock.py"
+
+echo "[$(date)] 预计算ETF指标（日线+周线+月线，fund_adj因子前复权）..."
+python3 "$SRC/generators/precompute.py" --source etf --mode all
+
+echo "[$(date)] 生成ETF列表JSON（benchmark分组+成交额排序）..."
+python3 "$SRC/generators/gen_etf_list.py"
+
 # ========== 步骤5：生成通知文件 ==========
 echo "[$(date)] 生成通知文件..."
 python3 "$SRC/generators/gen_notification.py"
