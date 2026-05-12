@@ -40,15 +40,11 @@ done
 # 创建今日目录
 mkdir -p $TODAY_DIR
 
-# ========== 步骤2：复制LW Charts库（今日数据依赖） ==========
-cp "$PROJECT_ROOT/data_etf/lightweight-charts.standalone.production.js" $TODAY_DIR/ 2>/dev/null
-echo "[$(date)] 静态资源已复制"
-
-# ========== 步骤3：下载数据 ==========
+# ========== 步骤2：下载数据 ==========
 echo "[$(date)] 开始下载数据..."
 python3 "$SRC/data_fetch/get_data.py"
 
-# ========== 步骤4：分析选股（6个战法） ==========
+# ========== 步骤3：分析选股（6个战法） ==========
 echo "[$(date)] 开始补票龙..."
 python3 "$SRC/strategies/analyze_bukou.py" --out-dir "$TODAY_DIR"
 
@@ -67,9 +63,20 @@ python3 "$SRC/strategies/analyze_redhover.py" --out-dir "$TODAY_DIR"
 echo "[$(date)] 开始高业绩龙..."
 python3 "$SRC/strategies/analyze_financial.py" --out-dir "$TODAY_DIR"
 
-# ========== 步骤4.5：预计算指标（只计算已选股） ==========
+# ========== 步骤4：预计算指标（只计算已选股） ==========
 echo "[$(date)] 开始预计算指标..."
 python3 "$SRC/generators/precompute.py" --mode all --from-results
+
+# ========== 步骤5：更新股票中文名表 ==========
+echo "[$(date)] 更新股票中文名表..."
+python3 -c "
+import tushare as ts, json
+pro = ts.pro_api()
+df = pro.stock_basic(list_status='L', fields='ts_code,name')
+names = dict(zip(df['ts_code'], df['name']))
+with open('$PROJECT_ROOT/frontend/stock_names.json', 'w', encoding='utf-8') as f:
+    json.dump(names, f, ensure_ascii=False)
+print(f'更新了 {len(names)} 只股票的中文名')"
 
 # ═══════════════════════════════════════════════════════════════════
 # ETF K线数据处理流程（重要修复记录）
@@ -82,32 +89,24 @@ python3 "$SRC/generators/precompute.py" --mode all --from-results
 #   5. gen_etf_list.py 生成 today/etf_list.json，侧边栏按 benchmark 分组+按成交额排序
 # ═══════════════════════════════════════════════════════════════════
 
+# ========== 步骤6：下载ETF K线数据 ==========
 echo "[$(date)] 下载ETF K线数据（adj='qfq'前复权）..."
 python3 "$SRC/data_fetch/get_etf_baostock.py"
 
+# ========== 步骤7：预计算ETF指标 ==========
 echo "[$(date)] 预计算ETF指标（日线+周线+月线，fund_adj因子前复权）..."
 python3 "$SRC/generators/precompute.py" --source etf --mode all
 
+# ========== 步骤8：生成ETF列表JSON ==========
 echo "[$(date)] 生成ETF列表JSON（benchmark分组+成交额排序）..."
 python3 "$SRC/generators/gen_etf_list.py"
 
-# ========== 步骤5：生成通知文件 ==========
+# ========== 步骤9：生成通知文件 ==========
 echo "[$(date)] 生成通知文件..."
 python3 "$SRC/generators/gen_notification.py"
 
-# ========== 步骤6：生成 dates.json（供入口页 fetch） ==========
+# ========== 步骤10：生成 dates.json（供入口页 fetch） ==========
 echo "[$(date)] 生成 dates.json..."
 python3 "$SRC/generators/gen_index.py"
-
-# ========== 步骤7：更新股票中文名表 ==========
-echo "[$(date)] 更新股票中文名表..."
-python3 -c "
-import tushare as ts, json
-pro = ts.pro_api()
-df = pro.stock_basic(list_status='L', fields='ts_code,name')
-names = dict(zip(df['ts_code'], df['name']))
-with open('$PROJECT_ROOT/frontend/stock_names.json', 'w', encoding='utf-8') as f:
-    json.dump(names, f, ensure_ascii=False)
-print(f'更新了 {len(names)} 只股票的中文名')"
 
 echo "[$(date)] 全部完成"
