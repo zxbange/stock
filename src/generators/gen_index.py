@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+import sys
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from utils.log_config import get_logger
+logger = get_logger("gen_index", "gen_index.log")
 """生成 dates.json（存于 daily_result/ 根目录，不随 today/ 归档）"""
 import json
 from pathlib import Path

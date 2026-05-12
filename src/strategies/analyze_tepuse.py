@@ -6,18 +6,18 @@ TePu战法选股（完全独立，无外部依赖）
 - offset: 15, max_window: 60, price_range_pct: 1.0, j_q_threshold: 0.10
 """
 
-import sys, logging
+import sys
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from utils.log_config import get_logger
+logger = get_logger("analyze", "analyze.log")
 from pathlib import Path
 from typing import Dict, List
 import pandas as pd
 import numpy as np
 
-logging.basicConfig(
-    level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
 )
-logger = logging.getLogger(__name__)
 
 
 def compute_kdj(df, n=9):

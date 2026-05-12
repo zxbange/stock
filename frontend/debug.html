@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Debug ETF</title></head>
+<body>
+<pre id="out"></pre>
+<script>
+var _baseDir = '/today/';
+var _etfBaseDir = _baseDir + 'indicators_etf/';
+var url = _etfBaseDir + '159005.SZ.json';
+var out = document.getElementById('out');
+out.textContent = 'Fetching: ' + url + '\n';
+fetch(url).then(function(r) {
+  out.textContent += 'Status: ' + r.status + '\n';
+  return r.json();
+}).then(function(d) {
+  out.textContent += 'OK! rows:' + d.rows.length + ' keys:' + Object.keys(d.indicators).join(',') + '\n';
+}).catch(function(e) {
+  out.textContent += 'Error: ' + e.message + '\n';
+});
+</script>
+</body></html>

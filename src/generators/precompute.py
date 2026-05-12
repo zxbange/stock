@@ -17,6 +17,9 @@ import os, json, sys, glob, argparse, concurrent.futures, re
 import pandas as pd
 import tushare as ts
 import time
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from utils.log_config import get_logger
+logger = get_logger("precompute", "precompute.log")
 
 
 def get_api():

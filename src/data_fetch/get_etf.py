@@ -23,26 +23,17 @@ import pandas as pd
 import tushare as ts
 
 # ---------- 日志 ----------
-LOG_PATH = Path("/home/bange/stock/log/etf_download.log")
-LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler(LOG_PATH, encoding="utf-8", mode="a"),
-    ],
-)
-logger = logging.getLogger("etf_download")
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from utils.log_config import get_logger
+logger = get_logger("get_etf", "get_etf.log")
 
 DATA_DIR = Path("/home/bange/stock/data_etf")
-START_DATE = "20240101"
+START_DATE = (datetime.now() - __import__('datetime').timedelta(days=365*2)).strftime('%Y0101')
 END_DATE = datetime.now().strftime("%Y%m%d")
 
 CALL_INTERVAL = 60.0 / 500   # 500次/分钟
 MAX_WORKERS = 8             # 并发下载线程数
 
-_token = None
 _lock = threading.Lock()
 _last_call = 0.0
 
@@ -59,14 +50,43 @@ def rate_call(func, *args, **kwargs):
     return func(*args, **kwargs)
 
 
+def get_token():
+    p = Path.home() / ".tushare" / "token.csv"
+    if p.exists():
+        token = p.read_text().strip().split(",")[-1]
+        if token and len(token) > 20:
+            return token
+    raise RuntimeError("Token文件无效，请检查 ~/.tushare/token.csv")
+
+_token = get_token()
+ts.set_token(_token)
+logger.info("Token已加载: %s...", _token[:10])
+
 def get_api():
     return ts.pro_api()
 
 
 def get_trade_date() -> str:
-    cal = rate_call(get_api().trade_cal, exchange='SSE', end_date=END_DATE, limit=5)
-    cal['cal_date'] = cal['cal_date'].astype(str)
-    return cal[cal['is_open'] == 1].sort_values('cal_date').iloc[-1]['cal_date']
+    """获取最新交易日（动态），API失败时从本地CSV推断"""
+    try:
+        cal = rate_call(get_api().trade_cal, exchange='SSE', end_date=END_DATE, limit=10)
+        cal['cal_date'] = cal['cal_date'].astype(str)
+        open_days = cal[cal['is_open'] == 1].sort_values('cal_date')
+        if not open_days.empty:
+            return open_days.iloc[-1]['cal_date']
+    except Exception as e:
+        logger.warning("获取交易日失败: %s，改用本地推断", e)
+    # Fallback：从本地CSV推断最新日期
+    csvs = sorted(DATA_DIR.glob("*.csv"), key=lambda p: p.stat().st_mtime, reverse=True)
+    if csvs:
+        with open(csvs[0]) as f:
+            next(f)
+            for line in f:
+                pass  # 读最后一行
+            date = line.split(',')[1][:8]
+            logger.info("本地推断最新交易日: %s", date)
+            return date
+    return END_DATE
 
 
 # ============================================================
@@ -105,7 +125,7 @@ def fetch_etf_raw(code: str) -> tuple:
 # 获取ETF列表
 # ============================================================
 def get_all_etf_codes() -> list:
-    """获取2024年前成立的所有ETF代码"""
+    """获取START_DATE之前已成立的ETF（动态，通常为2年前）"""
     api = get_api()
     logger.info("获取ETF列表...")
     etf_df = api.fund_basic(
@@ -113,9 +133,10 @@ def get_all_etf_codes() -> list:
         fields="ts_code,name,benchmark,found_date",
     )
     etf_df["found_date"] = etf_df["found_date"].astype(str)
-    etf_df = etf_df[etf_df["found_date"] < START_DATE].copy()
-    logger.info("2024年前成立的ETF: %d 只", len(etf_df))
-    return etf_df
+    # 保留START_DATE之前成立的ETF（动态过滤，非写死）
+    before_start = etf_df[etf_df["found_date"] < START_DATE].copy()
+    logger.info("候选ETF: %d 只（%s前成立）", len(before_start), START_DATE)
+    return before_start
 
 
 # ============================================================
@@ -141,7 +162,14 @@ def main():
     # 步骤1：获取全部ETF列表
     etf_df = get_all_etf_codes()
     all_codes = etf_df["ts_code"].tolist()
-    logger.info("候选ETF: %d 只", len(all_codes))
+    # 断点续传：跳过已有足够数据的CSV（约2年数据>500行）
+    existing = []
+    for c in all_codes:
+        path = DATA_DIR / f"{c}.csv"
+        if path.exists() and sum(1 for _ in open(path)) > 500:
+            existing.append(c)
+    todo_codes = [c for c in all_codes if c not in existing]
+    logger.info("候选ETF: %d 只，已存在%d只，待下载%d只", len(all_codes), len(existing), len(todo_codes))
 
     # 步骤2：下载全部ETF原始数据（fund_daily + fund_adj）
     logger.info("开始下载全部ETF原始数据（%d并发）...", MAX_WORKERS)
@@ -149,7 +177,7 @@ def main():
     success, fail = 0, 0
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        futures = {executor.submit(fetch_etf_raw, code): code for code in all_codes}
+        futures = {executor.submit(fetch_etf_raw, code): code for code in todo_codes}
         for fut in as_completed(futures):
             code = futures[fut]
             result = fut.result()

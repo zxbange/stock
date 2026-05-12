@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+import sys
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from utils.log_config import get_logger
+logger = get_logger("gen_notification", "gen_notification.log")
 """生成通知文件 - 从today/result_*.txt读取"""
 import re
 from pathlib import Path

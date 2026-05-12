@@ -7,6 +7,6 @@ pro = ts.pro_api()
 today = date.today().strftime('%Y%m%d')
 cal = pro.trade_cal(exchange='SSE', end_date=today, limit=2)
 if len(cal) >= 2:
-    print(cal.iloc[-2]['cal_date'])
+    print(cal.iloc[-2]['pretrade_date'])
 else:
     print(today)

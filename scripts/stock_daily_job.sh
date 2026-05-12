@@ -71,17 +71,6 @@ python3 "$SRC/generators/precompute.py" --mode all --from-results
 echo "[$(date)] 更新股票中文名表..."
 python3 "$SRC/generators/gen_stock_names.py"
 
-# ═══════════════════════════════════════════════════════════════════
-# ETF K线数据处理流程（重要修复记录）
-#   1. get_etf.py: Tushare fund_daily + fund_adj 前复权下载
-#   2. load_csv_etf 列映射（CSV格式: ts_code,date,pre_close,open,high,low,close,change,pct_chg,volume,amount）:
-#        正确: o=c[3], h=c[4], l=c[5], c=c[6], v=c[9]
-#        错误: o=c[2], h=c[3], l=c[4], c=c[5]  （把pre_close/open/high/low全部读错了）
-#   3. 折算/拆分前复权: 最新因子/latest_factor 取距今最近日期对应的因子，不是max(factor)
-#   4. precompute.py run() 中 OUT_DIR 按 source 动态切换（etf→indicators_etf/, stock→indicators/）
-#   5. gen_etf_list.py 生成 today/etf_list.json，侧边栏按 benchmark 分组+按成交额排序
-# ═══════════════════════════════════════════════════════════════════
-
 # ========== 步骤6：下载ETF K线数据 ==========
 echo "[$(date)] 下载ETF K线数据..."
 python3 "$SRC/data_fetch/get_etf.py"

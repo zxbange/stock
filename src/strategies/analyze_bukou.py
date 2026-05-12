@@ -6,18 +6,18 @@
 - bbi_min_window: 2, max_window: 60, bbi_q_threshold: 0.2
 """
 
-import sys, logging
+import sys
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from utils.log_config import get_logger
+logger = get_logger("analyze", "analyze.log")
 from pathlib import Path
 from typing import Dict, List
 import pandas as pd
 import numpy as np
 
-logging.basicConfig(
-    level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
 )
-logger = logging.getLogger(__name__)
 
 
 # ---- 指标计算（来自原Selector.py）----

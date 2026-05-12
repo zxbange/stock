@@ -6,19 +6,19 @@
 - gap_threshold: 0.2, j_q_threshold: 0.10
 """
 
-import sys, logging
+import sys
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from utils.log_config import get_logger
+logger = get_logger("analyze", "analyze.log")
 from pathlib import Path
 from typing import Dict, List
 import pandas as pd
 import numpy as np
 from scipy.signal import find_peaks
 
-logging.basicConfig(
-    level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
 )
-logger = logging.getLogger(__name__)
 
 
 def compute_kdj(df, n=9):

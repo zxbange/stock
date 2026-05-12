@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+import sys
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from utils.log_config import get_logger
+logger = get_logger("gen_stock_names", "gen_stock_names.log")
 """更新股票中文名表"""
 import tushare as ts
 import json

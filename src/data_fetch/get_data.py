@@ -2,9 +2,11 @@ import sys
 import logging
 import warnings
 import datetime as dt
+
 import tushare as ts
 import time
 import argparse
+from threading import Lock
 import pandas as pd
 from typing import List, Optional
 from pathlib import Path
@@ -12,21 +14,13 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 import random
 
-# ========= 配置日志和告警 ===========
-warnings.filterwarnings("ignore")
+# ========= 配置日志（统一标准格式）=========
+import sys
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from utils.log_config import get_logger
+logger = get_logger("get_data", "get_data.log")
 
-LOG_DIR = Path("./log/")
-Path.mkdir(LOG_DIR, parents=True, exist_ok=True)
-LOG_FILE = LOG_DIR/f"getData.log"
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(filename)s:%(lineno)d %(message)s",
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler(LOG_FILE, mode="a", encoding="utf-8"),
-    ],
-)
-logger = logging.getLogger("fetch_mkcap")
+warnings.filterwarnings("ignore")
 
 # 屏蔽第三方库多余 INFO 日志
 for noisy in ("httpx", "urllib3", "_client", "akshare"):
@@ -127,8 +121,8 @@ def main():
     parser = argparse.ArgumentParser(description="抓取股票K线")
     parser.add_argument("--start", default="20240101", help="起始日期 YYYYMMDD 或 'today'")
     parser.add_argument("--end", default="today", help="结束日期 YYYYMMDD 或 'today'")
-    parser.add_argument("--out", default="./data", help="股票信息文件输出路径")
-    parser.add_argument("--workers", type=int, default=1, help="并发抓取工作线程数")
+    parser.add_argument("--out", default="data_kline", help="股票信息文件输出路径")
+    parser.add_argument("--workers", type=int, default=8, help="并发抓取工作线程数")
     args = parser.parse_args()
 
     start = dt.datetime.today().strftime("%Y%m%d") if args.start.lower() == "today" else args.start
@@ -175,9 +169,21 @@ def main():
             )
             for code in codes
         ]
+        # 速率限制：500次/分钟 = 8.33次/秒，每次间隔约0.12秒
+        last_req = [0.0]
+        _lock = Lock()
+        MIN_INTERVAL = 1.0 / 8.33
+
+        def rate_limit():
+            with _lock:
+                now = time.time()
+                wait = MIN_INTERVAL - (now - last_req[0])
+                if last_req[0] > 0 and wait > 0:
+                    time.sleep(wait)
+                last_req[0] = time.time()
+
         for _ in tqdm(as_completed(futures), total=len(codes), desc="下载进度"):
-            time.sleep(0.1)
-            pass
+            rate_limit()
     logger.info("全部任务完成, 数据已保存至 %s", out_dir.resolve())
 
 if __name__ == "__main__":

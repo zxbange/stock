@@ -10,18 +10,18 @@
 - 日线MA链从MA10开始（MA10>MA20>MA30>MA60>MA120>MA240，不要求MA5>MA10）
 """
 
-import sys, logging
+import sys
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from utils.log_config import get_logger
+logger = get_logger("analyze", "analyze.log")
 from pathlib import Path
 from typing import Dict, List
 import pandas as pd
 import numpy as np
 
-logging.basicConfig(
-    level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
 )
-logger = logging.getLogger(__name__)
 
 
 def _volume_ratio(vol_series, n1, n2):
