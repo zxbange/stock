@@ -38,7 +38,7 @@ _TUSHARE_TOKEN = "34ffa547652d6ddcc3b8ace33adb97f6f582656a02599a059091c705"
 def get_tushare_api():
     import tushare as ts
     ts.set_token(_TUSHARE_TOKEN)
-    return ts.pro_api()
+    return ts.pro_api(timeout=60)
 
 # ---------- Rate Limiter ----------
 _lock = threading.Lock()
