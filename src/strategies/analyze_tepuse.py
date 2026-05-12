@@ -9,7 +9,7 @@ TePu战法选股（完全独立，无外部依赖）
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.log_config import get_logger
-logger = get_logger("analyze", "analyze.log")
+logger = get_logger("分析选股-TePu龙")
 from pathlib import Path
 from typing import Dict, List
 import pandas as pd

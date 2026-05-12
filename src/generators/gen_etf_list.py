@@ -2,7 +2,7 @@
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.log_config import get_logger
-logger = get_logger("gen_etf_list", "gen_etf_list.log")
+logger = get_logger("生成ETF列表")
 """生成ETF indicators目录清单到 today/etf_list.json"""
 import json, csv
 from pathlib import Path

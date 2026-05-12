@@ -2,7 +2,7 @@
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.log_config import get_logger
-logger = get_logger("gen_etf_klines", "gen_etf_klines.log")
+logger = get_logger("生成ETF_K线图")
 """
 ETF K线图批量生成器 - 从 data_etf/*.csv 读取本地数据
 纯本地计算，不走API，多进程并行

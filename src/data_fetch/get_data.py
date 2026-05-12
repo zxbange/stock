@@ -18,7 +18,7 @@ import random
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.log_config import get_logger
-logger = get_logger("get_data", "get_data.log")
+logger = get_logger("下载数据")
 
 warnings.filterwarnings("ignore")
 

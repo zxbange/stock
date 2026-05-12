@@ -18,7 +18,7 @@ import glob
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.log_config import get_logger
-logger = get_logger("analyze", "analyze.log")
+logger = get_logger("分析选股-红悬停龙")
 import sys
 from pathlib import Path
 

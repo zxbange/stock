@@ -25,7 +25,7 @@ import tushare as ts
 # ---------- 日志 ----------
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.log_config import get_logger
-logger = get_logger("get_etf", "get_etf.log")
+logger = get_logger("下载ETF数据")
 
 DATA_DIR = Path("/home/bange/stock/data_etf")
 START_DATE = (datetime.now() - __import__('datetime').timedelta(days=365*2)).strftime('%Y0101')
