@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+
+# Data (generated daily)
+data_kline/
+data_etf/
+data_financial/
+daily_result/today/
+daily_result/20*/
+
+# Logs
+log/*.log
+
+# Frontend generated files
+frontend/stock_names.json
