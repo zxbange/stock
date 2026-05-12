@@ -130,7 +130,7 @@ def main():
     parser = argparse.ArgumentParser(description="抓取股票K线")
     parser.add_argument("--start", default="20240101", help="起始日期 YYYYMMDD 或 'today'")
     parser.add_argument("--end", default="today", help="结束日期 YYYYMMDD 或 'today'")
-    parser.add_argument("--out", default=str(BASE / "data/kline"), help="股票信息文件输出路径")
+    parser.add_argument("--out", default=str(PROJECT_ROOT / "data/kline"), help="股票信息文件输出路径")
     parser.add_argument("--workers", type=int, default=8, help="并发抓取工作线程数")
     args = parser.parse_args()
 
