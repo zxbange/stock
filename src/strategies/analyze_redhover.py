@@ -15,25 +15,25 @@
 from __future__ import annotations
 
 import glob
-import sys
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.log_config import get_logger
-logger = get_logger("分析选股-红悬停龙")
+import logging
 import sys
 from pathlib import Path
 
 import pandas as pd
 
 # ---------- 日志 ----------
+logging.basicConfig(
+    level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler(Path(__file__).parent.parent.parent / "log" / "redhover_filter.log", encoding="utf-8"),
+        
     ],
 )
+logger = logging.getLogger("redhover_filter")
 
 # ---------- 配置 ----------
-DATA_DIR = Path(__file__).parent.parent.parent / "data_kline"
+DATA_DIR = PROJECT_ROOT / "data/kline"
 
 def fetch_st_stocks() -> set:
     """从Tushare实时获取ST股票列表"""

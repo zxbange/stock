@@ -6,19 +6,19 @@
 - gap_threshold: 0.2, j_q_threshold: 0.10
 """
 
-import sys
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.log_config import get_logger
-logger = get_logger("分析选股-填坑龙")
+import sys, logging
 from pathlib import Path
 from typing import Dict, List
 import pandas as pd
 import numpy as np
 from scipy.signal import find_peaks
 
+logging.basicConfig(
+    level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
 )
+logger = logging.getLogger(__name__)
 
 
 def compute_kdj(df, n=9):
@@ -134,7 +134,7 @@ class PeakKDJSelector:
 def main():
     import argparse
     parser = argparse.ArgumentParser(description="填坑战法选股")
-    parser.add_argument("--data-dir", default="./data_kline", help="CSV目录")
+    parser.add_argument("--data-dir", default=str(PROJECT_ROOT / "data/kline"), help="CSV目录")
     parser.add_argument("--date", help="交易日 YYYY-MM-DD")
     parser.add_argument("--tickers", default="all", help="'all'或逗号列表")
     parser.add_argument("--log", default="./log/select_results.log", help="日志文件")

@@ -8,24 +8,24 @@ from __future__ import annotations
 
 import argparse
 import glob
-import sys
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.log_config import get_logger
-logger = get_logger("分析选股-高业绩龙")
+import logging
 import sys
 from collections import defaultdict
 from pathlib import Path
 
 import pandas as pd
 
+logging.basicConfig(
+    level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
         logging.StreamHandler(sys.stdout),
         logging.FileHandler("log/financial_filter.log", encoding="utf-8"),
     ],
 )
+logger = logging.getLogger("financial_filter")
 
-DATA_DIR = Path(__file__).parent.parent.parent / "data_financial"
+DATA_DIR = PROJECT_ROOT / "data/financial"
 MIN_GROWTH_RATE = 0.22
 
 

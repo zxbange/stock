@@ -7,17 +7,22 @@
 输出统一到 daily_result/today/indicators/
 
 支持两种数据源：
-  --source stock : 从 data_kline/*.csv 读取（默认）
-  --source etf   : 从 data_etf/*.csv 读取
+  --source stock : 从 data/kline/*.csv 读取（默认）
+  --source etf   : 从 data/etf/*.csv 读取
 
 特殊模式：
   --from-results : 从 today/result_*.txt 读取已选股代码，只预计算这些
 """
 import os, json, sys, glob, argparse, concurrent.futures, re
+from pathlib import Path
+from pathlib import Path
 import pandas as pd
 import tushare as ts
 import time
-sys.path.insert(0, str(Path(__file__).parent.parent))
+
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+BASE = PROJECT_ROOT
 from utils.log_config import get_logger
 logger = get_logger("预计算指标")
 
@@ -32,8 +37,8 @@ def rate_call(func, *args, **kwargs):
     """带速率限制的API调用（precompute阶段，低频可复用）"""
     return func(*args, **kwargs)  # 直接调，无严格限速
 
-DATA_DIR_STOCK = '/home/bange/stock/data_kline'
-DATA_DIR_ETF   = '/home/bange/stock/data_etf'
+DATA_DIR_STOCK = str(PROJECT_ROOT / 'data/kline')
+DATA_DIR_ETF   = str(PROJECT_ROOT / 'data/etf')
 TODAY_DIR      = '/home/bange/stock/daily_result/today'
 OUT_DIR        = os.path.join(TODAY_DIR, 'indicators')
 os.makedirs(OUT_DIR, exist_ok=True)

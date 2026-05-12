@@ -3,15 +3,17 @@ __pycache__/
 *.py[cod]
 *.pyc
 
-# Data (generated daily)
-data_kline/
-data_etf/
-data_financial/
+# Data (统一到 data/ 目录)
+data/kline/
+data/etf/
+data/financial/
+
+# Daily results
 daily_result/today/
 daily_result/20*/
 
 # Logs
 log/*.log
 
-# Frontend generated files
+# Frontend generated
 frontend/stock_names.json

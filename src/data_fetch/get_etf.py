@@ -7,7 +7,7 @@
   3. CSV存RAW价格（adj_factor列同步保存，供前端实时前复权）
 数据来源: Tushare fund_daily (原始价格) + fund_adj (复权因子)
 前复权公式（前端执行）: adj_price = raw_price × 当日因子 ÷ 最新因子
-存储目录: /home/bange/stock/data_etf/
+存储目录: /home/bange/stock/data/etf/
 """
 
 from __future__ import annotations
@@ -27,7 +27,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.log_config import get_logger
 logger = get_logger("下载ETF数据")
 
-DATA_DIR = Path("/home/bange/stock/data_etf")
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+DATA_DIR = PROJECT_ROOT / "data/etf"
 START_DATE = (datetime.now() - __import__('datetime').timedelta(days=365*2)).strftime('%Y0101')
 END_DATE = datetime.now().strftime("%Y%m%d")
 

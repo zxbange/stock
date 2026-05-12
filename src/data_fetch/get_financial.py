@@ -18,7 +18,8 @@ logger = get_logger("下载财务数据")
 
 
 
-DATA_DIR = Path(__file__).parent.parent / "data_financial"
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+DATA_DIR = PROJECT_ROOT / "data/financial"
 CALL_INTERVAL = 60.0 / 195
 
 _lock = threading.Lock()

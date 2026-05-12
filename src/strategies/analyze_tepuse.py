@@ -7,17 +7,15 @@ TePu战法选股（完全独立，无外部依赖）
 """
 
 import sys
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.log_config import get_logger
-logger = get_logger("分析选股-TePu龙")
 from pathlib import Path
 from typing import Dict, List
 import pandas as pd
 import numpy as np
 
-    format='%(asctime)s [%(levelname)s] %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
-)
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(PROJECT_ROOT / 'src'))
+from utils.log_config import get_logger
+logger = get_logger("分析选股")
 
 
 def compute_kdj(df, n=9):
@@ -113,7 +111,7 @@ class BreakoutVolumeKDJSelector:
 def main():
     import argparse
     parser = argparse.ArgumentParser(description="TePu战法选股")
-    parser.add_argument("--data-dir", default="./data_kline", help="CSV目录")
+    parser.add_argument("--data-dir", default=str(PROJECT_ROOT / "data/kline"), help="CSV目录")
     parser.add_argument("--date", help="交易日 YYYY-MM-DD")
     parser.add_argument("--tickers", default="all", help="'all'或逗号列表")
     parser.add_argument("--log", default="./log/select_results.log", help="日志文件")

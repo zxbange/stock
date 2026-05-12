@@ -12,7 +12,7 @@ from pathlib import Path
 from multiprocessing import Pool, cpu_count
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
-ETF_DATA_DIR = PROJECT_ROOT / "data_etf"
+ETF_DATA_DIR = PROJECT_ROOT / "data/etf"
 KLINE_OUT_DIR = ETF_DATA_DIR / "kline"
 KLINE_OUT_DIR.mkdir(parents=True, exist_ok=True)
 

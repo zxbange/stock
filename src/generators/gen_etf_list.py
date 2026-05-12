@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).parent.parent.parent
 import sys
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(PROJECT_ROOT / 'src'))
 from utils.log_config import get_logger
 logger = get_logger("生成ETF列表")
 """生成ETF indicators目录清单到 today/etf_list.json"""
 import json, csv
-from pathlib import Path
 
-DATA_DIR = Path('/home/bange/stock/data_etf')
+DATA_DIR = PROJECT_ROOT / 'data/etf'
 IND_DIR  = Path('/home/bange/stock/daily_result/today/indicators_etf')
 OUT     = Path('/home/bange/stock/daily_result/today/etf_list.json')
 

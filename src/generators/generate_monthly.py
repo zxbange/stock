@@ -7,7 +7,9 @@ from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from itertools import chain
 
-DATA_DIR = "/home/bange/stock/data_kline"
+from pathlib import Path
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+DATA_DIR = str(PROJECT_ROOT / "data/kline")
 
 def calc_ema(values, period):
     """计算EMA"""

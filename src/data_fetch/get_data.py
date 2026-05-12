@@ -10,6 +10,7 @@ from threading import Lock
 import pandas as pd
 from typing import List, Optional
 from pathlib import Path
+PROJECT_ROOT = Path(__file__).parent.parent.parent
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 import random
@@ -121,7 +122,7 @@ def main():
     parser = argparse.ArgumentParser(description="抓取股票K线")
     parser.add_argument("--start", default="20240101", help="起始日期 YYYYMMDD 或 'today'")
     parser.add_argument("--end", default="today", help="结束日期 YYYYMMDD 或 'today'")
-    parser.add_argument("--out", default="data_kline", help="股票信息文件输出路径")
+    parser.add_argument("--out", default=str(BASE / "data/kline"), help="股票信息文件输出路径")
     parser.add_argument("--workers", type=int, default=8, help="并发抓取工作线程数")
     args = parser.parse_args()
 
