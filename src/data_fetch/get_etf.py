@@ -21,6 +21,7 @@ from pathlib import Path
 
 import pandas as pd
 import tushare as ts
+from tqdm import tqdm
 
 # ---------- 日志 ----------
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -179,7 +180,7 @@ def main():
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         futures = {executor.submit(fetch_etf_raw, code): code for code in todo_codes}
-        for fut in as_completed(futures):
+        for fut in tqdm(as_completed(futures), total=len(futures), desc="下载ETF原始数据", leave=True):
             code = futures[fut]
             result = fut.result()
             if result[0] is not None:
@@ -187,8 +188,6 @@ def main():
                 success += 1
             else:
                 fail += 1
-            if (len(raw_data) + fail) % 100 == 0:
-                logger.info("下载进度: 成功%d 失败%d", success, fail)
 
     logger.info("原始数据下载完成: 成功%d 失败%d", success, fail)
 
@@ -225,7 +224,7 @@ def main():
     # 步骤4：保存raw价格 + 每行的adj_factor（供前端做前复权）
     logger.info("保存RAW价格（前端实时前复权）...")
     saved = 0
-    for code in selected_codes:
+    for code in tqdm(selected_codes, total=len(selected_codes), desc="保存ETF前复权", leave=True):
         df, adj_df = raw_data[code]
 
         # 合并每行的adj_factor（不改变价格）

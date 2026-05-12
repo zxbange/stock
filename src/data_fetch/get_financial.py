@@ -11,6 +11,7 @@ from datetime import datetime
 
 import pandas as pd
 import tushare as ts
+from tqdm import tqdm
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.log_config import get_logger
@@ -127,15 +128,13 @@ def main():
     success = 0
     fail = 0
 
-    for i, code in enumerate(codes):
+    for i, code in tqdm(enumerate(codes), total=len(codes), desc="下载财务数据", leave=True):
         ok = fetch_stock(code, api, all_periods)
         if ok:
             success += 1
         else:
             fail += 1
 
-        if (i + 1) % 500 == 0:
-            logger.info("进度: %d/%d (成功%d)", i + 1, len(codes), success)
 
     logger.info("下载完成！成功 %d 支，失败 %d 支", success, fail)
 
