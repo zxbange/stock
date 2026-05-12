@@ -94,6 +94,11 @@ def get_one(code:str, start:str, end:str, out_dir:Path):
             if new_df.empty:
                 logger.debug("%s 无新数据", code)
                 break
+            # 过滤全行为NaN的无效数据，防止Tushare返回空数据帧
+            new_df = new_df.dropna(how='all')
+            if new_df.empty:
+                logger.debug("%s 有效数据为空，跳过", code)
+                break
             new_df = validate(new_df)
             if csv_path.exists():
                 old_df = pd.read_csv(
@@ -109,6 +114,9 @@ def get_one(code:str, start:str, end:str, out_dir:Path):
                     .sort_values("date")
                 )
             new_df.to_csv(csv_path, index=False)
+            if csv_path.exists() and csv_path.stat().st_size == 0:
+                csv_path.unlink()
+                logger.warning("%s 写入文件为0字节，已删除，次日将重试", code)
             break
         except Exception:
             logger.exception("%s 第 %d 次抓取失败", code, attempt)
