@@ -65,6 +65,7 @@ ts.set_token(_token)
 logger.info("Token已加载: %s...", _token[:10])
 
 def get_api():
+    ts.set_token("34ffa547652d6ddcc3b8ace33adb97f6f582656a02599a059091c705")
     return ts.pro_api()
 
 

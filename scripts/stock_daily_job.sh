@@ -3,7 +3,7 @@
 # 每日股票分析任务
 # 所有输出同时记录到 log/stock_daily_job.log
 # ============================================================
-
+set -x
 PROJECT_ROOT="/home/bange/stock"
 SRC="$PROJECT_ROOT/src"
 LOG_DIR="$PROJECT_ROOT/log"
@@ -73,11 +73,7 @@ PREV_DIR="$PROJECT_ROOT/daily_result/$PREV_TRADE_DATE"
 
 if [ -d "$TODAY_DIR" ] && [ "$(ls -A $TODAY_DIR 2>/dev/null)" ]; then
     mkdir -p "$PREV_DIR"
-    mv $TODAY_DIR/result_*.txt $PREV_DIR/ 2>/dev/null
-    if [ -d "$TODAY_DIR/indicators" ]; then
-        cp -r $TODAY_DIR/indicators $PREV_DIR/
-        log "[归档] indicators/ -> $PREV_DIR"
-    fi
+    mv $TODAY_DIR/* $PREV_DIR/ 2>/dev/null
     log "[归档] 上一交易日 $PREV_DIR 已创建"
 fi
 
