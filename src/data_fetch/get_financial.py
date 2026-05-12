@@ -3,10 +3,6 @@
 从Tushare下载A股财务数据（年报+季报）
 动态计算：年报2023/2024/2025 + 季报Q1/Q2/Q3 2023/2024/2025 + 当前年Q1
 """
-
-from __future__ import annotations
-
-import logging
 import sys
 import time
 import threading
@@ -16,16 +12,11 @@ from datetime import datetime
 import pandas as pd
 import tushare as ts
 
-# ---------- 日志 ----------
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler("log/financial_download.log", encoding="utf-8"),
-    ],
-)
-logger = logging.getLogger("financial_download")
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from utils.log_config import get_logger
+logger = get_logger("下载财务数据")
+
+
 
 DATA_DIR = Path(__file__).parent.parent / "data_financial"
 CALL_INTERVAL = 60.0 / 195
