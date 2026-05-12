@@ -33,6 +33,8 @@ logging.basicConfig(
 logger = logging.getLogger("redhover_filter")
 
 # ---------- 配置 ----------
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+
 DATA_DIR = PROJECT_ROOT / "data/kline"
 
 def fetch_st_stocks() -> set:

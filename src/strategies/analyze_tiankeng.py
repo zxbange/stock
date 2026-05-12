@@ -133,6 +133,8 @@ class PeakKDJSelector:
 
 def main():
     import argparse
+    PROJECT_ROOT = Path(__file__).parent.parent.parent
+
     parser = argparse.ArgumentParser(description="填坑战法选股")
     parser.add_argument("--data-dir", default=str(PROJECT_ROOT / "data/kline"), help="CSV目录")
     parser.add_argument("--date", help="交易日 YYYY-MM-DD")

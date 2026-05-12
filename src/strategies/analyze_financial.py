@@ -12,6 +12,8 @@ import logging
 import sys
 from collections import defaultdict
 from pathlib import Path
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+
 
 import pandas as pd
 
