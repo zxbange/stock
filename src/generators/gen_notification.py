@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
+from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.log_config import get_logger
 logger = get_logger("生成通知")
 """生成通知文件 - 从today/result_*.txt读取"""
 import re
-from pathlib import Path
 from datetime import date
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent

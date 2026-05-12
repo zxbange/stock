@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.log_config import get_logger
@@ -6,7 +7,6 @@ logger = get_logger("更新中文名表")
 """更新股票中文名表"""
 import tushare as ts
 import json
-from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 pro = ts.pro_api()

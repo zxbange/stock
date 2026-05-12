@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
+from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.log_config import get_logger
 logger = get_logger("生成dates.json")
 """生成 dates.json（存于 daily_result/ 根目录，不随 today/ 归档）"""
 import json
-from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 DR = PROJECT_ROOT / 'daily_result'
