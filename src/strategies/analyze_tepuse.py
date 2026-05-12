@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-TePu战法选股（完全独立，无外部依赖）
+回头龙战法选股（完全独立，无外部依赖）
 参数（硬编码，匹配configs.json）：
 - j_threshold: 1, up_threshold: 3.0, volume_threshold: 0.6667
 - offset: 15, max_window: 60, price_range_pct: 1.0, j_q_threshold: 0.10
@@ -110,7 +110,7 @@ class BreakoutVolumeKDJSelector:
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description="TePu战法选股")
+    parser = argparse.ArgumentParser(description="回头龙战法选股")
     parser.add_argument("--data-dir", default=str(PROJECT_ROOT / "data/kline"), help="CSV目录")
     parser.add_argument("--date", help="交易日 YYYY-MM-DD")
     parser.add_argument("--tickers", default="all", help="'all'或逗号列表")
@@ -141,7 +141,7 @@ def main():
     selector = BreakoutVolumeKDJSelector()
     picks = selector.select(date, data)
 
-    alias = "TePu战法"
+    alias = "回头龙战法"
     with open(args.log, "a", encoding="utf-8") as f:
         f.write(f"\n{'='*20} 选股结果 [{alias}] {'='*20}\n")
         f.write(f"交易日: {date.strftime('%Y-%m-%d')}\n")
@@ -155,9 +155,9 @@ def main():
         f.write("\n")
     # 保存结果到txt（供后续流程读取）
     if args.out_dir:
-        out_path = Path(args.out_dir) / "result_TePu.txt"
+        out_path = Path(args.out_dir) / "result_回头.txt"
         with open(out_path, "w", encoding="utf-8") as f:
-            f.write("TePu战法" + "\n")
+            f.write("回头龙战法" + "\n")
             for code in picks:
                 f.write(code + "\n")
 

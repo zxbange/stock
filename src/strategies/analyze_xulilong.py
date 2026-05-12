@@ -3,9 +3,9 @@
 蓄力龙选股分析脚本
 
 选股逻辑（三阳蓄力形态）：
-1. T-2日：收盘价 > 开盘价（阳线），涨幅 > 3%，成交量 > T-3日 × 1.2
-2. T-1日：收盘价 < 开盘价（阴线），收盘价 > T-2日开盘价，跌幅 < 4%，成交量 < T-2日 × 0.8
-3. T日：  收盘价 > 开盘价（阳线），收盘价 > T-2日收盘价，涨幅 > 3%，成交量 > T-1日 × 1.2
+1. T-2日：阳线（收>开），涨幅>3%，成交量>T-3日×1.2
+2. T-1日：阴线（收<开），收盘>T-2开盘，跌幅<-4%，成交量<T-2日×0.8
+3. T日：  阳线（收>开），收盘>T-2收盘，涨幅>3%，成交量>T-1日×1.2
 4. 均线： MA10 > MA20 > MA30 > MA60
 """
 
@@ -43,16 +43,14 @@ def analyze_one(code: str, df: pd.DataFrame) -> bool:
     """
     分析单只股票是否满足蓄力龙条件
     df: 按date升序排列的日K线数据（最后一行=T日）
-    需要至少5个交易日（算MA60）
+    需要至少65个交易日（算MA60）
     """
-    if df is None or len(df) < 60:
+    if df is None or len(df) < 65:
         return False
 
-    # 取最近60个交易日（足够算MA60）
-    df = df.tail(60).copy().reset_index(drop=True)
+    # 取最近65个交易日
+    df = df.tail(65).copy().reset_index(drop=True)
 
-    # 最近4天索引（最后5行: T-4=T, T-3, T-2, T-1, T=iloc[-1]）
-    # T日=iloc[-1], T-1=iloc[-2], T-2=iloc[-3], T-3=iloc[-4], T-4=iloc[-5]
     if len(df) < 5:
         return False
 
@@ -62,38 +60,42 @@ def analyze_one(code: str, df: pd.DataFrame) -> bool:
     day_t   = df.iloc[-1]  # T
 
     # ---- 条件1: T-2日阳线 + 涨幅 > 3% + 放量 ----
-    t2_close = float(day_t2['close'])
+    # 用 pct_chg（当日涨跌幅）判断涨跌
+    t2_pct   = float(day_t2['pct_chg'])
     t2_open  = float(day_t2['open'])
+    t2_close = float(day_t2['close'])
     t2_vol   = float(day_t2['volume'])
     t3_vol   = float(day_t3['volume'])
 
     cond1_ok = (
         t2_close > t2_open and                          # 阳线
-        (t2_close - t2_open) / t2_open * 100 > RISE_THRESHOLD and  # 涨幅>3%
-        t2_vol > t3_vol * VOLUME_ENLARGE_T2             # 放量>1.2倍
+        t2_pct > RISE_THRESHOLD and                     # 涨幅>3%
+        t2_vol > t3_vol * VOLUME_ENLARGE_T2            # 放量>1.2倍
     )
 
     # ---- 条件2: T-1日阴线 + 收盘>T-2开盘 + 跌幅<4% + 缩量 ----
-    t1_close = float(day_t1['close'])
+    t1_pct   = float(day_t1['pct_chg'])
     t1_open  = float(day_t1['open'])
+    t1_close = float(day_t1['close'])
     t1_vol   = float(day_t1['volume'])
 
     cond2_ok = (
-        t1_close < t1_open and                          # 阴线
-        t1_close > t2_open and                           # 收盘>T-2开盘价
-        (t1_close - t1_open) / t1_open * 100 > FALL_THRESHOLD and  # 跌幅<4%（>-4%）
-        t1_vol < t2_vol * VOLUME_SHRINK_T1             # 缩量<0.8倍
+        t1_close < t1_open and                           # 阴线（收<开）
+        t1_close > t2_open and                            # 收盘>T-2开盘价
+        -4.0 < t1_pct < 0 and                             # 跌幅低于4%（-4% < 跌幅 < 0）
+        t1_vol < t2_vol * VOLUME_SHRINK_T1               # 缩量<0.8倍
     )
 
     # ---- 条件3: T日阳线 + 收盘>T-2收盘 + 涨幅>3% + 放量 ----
-    t_close  = float(day_t['close'])
-    t_open   = float(day_t['open'])
-    t_vol    = float(day_t['volume'])
+    t_pct   = float(day_t['pct_chg'])
+    t_open  = float(day_t['open'])
+    t_close = float(day_t['close'])
+    t_vol   = float(day_t['volume'])
 
     cond3_ok = (
         t_close > t_open and                            # 阳线
-        t_close > t2_close and                           # 收盘>T-2收盘价
-        (t_close - t_open) / t_open * 100 > RISE_THRESHOLD and  # 涨幅>3%
+        t_close > t2_close and                          # 收盘>T-2收盘价
+        t_pct > RISE_THRESHOLD and                       # 涨幅>3%
         t_vol > t1_vol * VOLUME_ENLARGE_T               # 放量>1.2倍
     )
 
@@ -132,7 +134,8 @@ def main():
     for csv_path in csv_files:
         code = Path(csv_path).stem  # e.g. "000001.SZ"
         try:
-            df = pd.read_csv(csv_path, usecols=["date", "open", "high", "low", "close", "volume", "pct_chg"],
+            df = pd.read_csv(csv_path,
+                             usecols=["date", "open", "high", "low", "close", "volume", "pct_chg"],
                              parse_dates=["date"])
             if df.empty:
                 continue

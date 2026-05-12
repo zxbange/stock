@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-红悬停选股分析脚本
+跳高选股分析脚本
 
 选股逻辑：
 1. T-2日（倒数第3个交易日）涨停
@@ -181,17 +181,17 @@ def main():
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(description="红悬停选股")
-    parser.add_argument("--out-dir", help="输出目录，保存result_红悬停.txt")
+    parser = argparse.ArgumentParser(description="跳高选股")
+    parser.add_argument("--out-dir", help="输出目录，保存result_跳高.txt")
     args = parser.parse_args()
     codes = main()
     if codes:
         print(f"\n符合条件的股票代码: {', '.join(codes)}")
     # 保存到指定目录
     if args.out_dir:
-        out_path = Path(args.out_dir) / "result_红悬停.txt"
+        out_path = Path(args.out_dir) / "result_跳高.txt"
         with open(out_path, "w", encoding="utf-8") as f:
-            f.write("红悬停战法\n")
+            f.write("跳高战法\n")
             for code in codes:
                 f.write(code + "\n")
         print(f"已保存到: {out_path}")

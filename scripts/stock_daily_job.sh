@@ -91,12 +91,12 @@ run_step "下载K线数据" "python3 $SRC/data_fetch/get_data.py"
 # ---------- 步骤3：6个战法选股 ----------
 for step_info in \
     "补票龙:python3 $SRC/strategies/analyze_bukou.py --out-dir $TODAY_DIR" \
-    "TePu龙:python3 $SRC/strategies/analyze_tepuse.py --out-dir $TODAY_DIR" \
+    "回头龙:python3 $SRC/strategies/analyze_tepuse.py --out-dir $TODAY_DIR" \
     "填坑龙:python3 $SRC/strategies/analyze_tiankeng.py --out-dir $TODAY_DIR" \
-    "大波浪龙:python3 $SRC/strategies/analyze_dabolang.py --out-dir $TODAY_DIR" \
-    "红悬停龙:python3 $SRC/strategies/analyze_redhover.py --out-dir $TODAY_DIR" \
+    "大波龙:python3 $SRC/strategies/analyze_dabolang.py --out-dir $TODAY_DIR" \
+    "跳高龙:python3 $SRC/strategies/analyze_redhover.py --out-dir $TODAY_DIR" \
     "蓄力龙:python3 $SRC/strategies/analyze_xulilong.py --out-dir $TODAY_DIR" \
-    "高业绩龙:python3 $SRC/strategies/analyze_financial.py --out-dir $TODAY_DIR"; do
+    "实力龙:python3 $SRC/strategies/analyze_financial.py --out-dir $TODAY_DIR"; do
     label="${step_info%%:*}"
     cmd="${step_info#*:}"
     run_step "$label" "$cmd"

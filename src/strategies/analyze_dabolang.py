@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-大波浪战法选股（完全独立，无外部依赖）
+大波龙战法选股（完全独立，无外部依赖）
 参数（硬编码）：
 - monthly_ok_months: 3, monthly_vol_ratio: 1.1
 - weekly_ok_weeks: 6, weekly_recent_close_weeks: 10, weekly_vol_ratio: 1.2
@@ -186,7 +186,7 @@ class BigWaveSelector:
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description="大波浪战法选股")
+    parser = argparse.ArgumentParser(description="大波龙战法选股")
     parser.add_argument("--data-dir", default=str(PROJECT_ROOT / "data/kline"), help="CSV目录")
     parser.add_argument("--date", help="交易日 YYYY-MM-DD")
     parser.add_argument("--tickers", default="all", help="'all'或逗号列表")
@@ -217,7 +217,7 @@ def main():
     selector = BigWaveSelector()
     picks = selector.select(date, data)
 
-    alias = "大波浪战法"
+    alias = "大波龙战法"
     with open(args.log, "a", encoding="utf-8") as f:
         f.write(f"\n{'='*20} 选股结果 [{alias}] {'='*20}\n")
         f.write(f"交易日: {date.strftime('%Y-%m-%d')}\n")
@@ -231,9 +231,9 @@ def main():
         f.write("\n")
     # 保存结果到txt（供后续流程读取）
     if args.out_dir:
-        out_path = Path(args.out_dir) / "result_大波浪.txt"
+        out_path = Path(args.out_dir) / "result_大波.txt"
         with open(out_path, "w", encoding="utf-8") as f:
-            f.write("大波浪战法" + "\n")
+            f.write("大波龙战法" + "\n")
             for code in picks:
                 f.write(code + "\n")
 

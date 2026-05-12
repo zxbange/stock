@@ -12,11 +12,11 @@ PROJECT_ROOT = Path(__file__).parent.parent.parent
 today_dir = PROJECT_ROOT / 'daily_result' / 'today'
 files = {
     '补票': today_dir / 'result_补票.txt',
-    'TePu': today_dir / 'result_TePu.txt',
+    'TePu': today_dir / 'result_回头.txt',
     '填坑': today_dir / 'result_填坑.txt',
-    '大波浪': today_dir / 'result_大波浪.txt',
-    '红悬停': today_dir / 'result_红悬停.txt',
-    '高业绩': today_dir / 'result_高业绩.txt',
+    '大波浪': today_dir / 'result_大波.txt',
+    '红悬停': today_dir / 'result_跳高.txt',
+    '高业绩': today_dir / 'result_实力.txt',
 }
 
 data = {}
@@ -56,4 +56,4 @@ Path('/tmp/stock_notifications').mkdir(parents=True, exist_ok=True)
 with open('/tmp/stock_notifications/stock_daily_result.txt', 'w') as f:
     f.write(msg)
 
-print("结果: 补票" + str(len(data['补票'])) + "只, TePu" + str(len(data['TePu'])) + "只, 填坑" + str(len(data['填坑'])) + "只, 红悬停" + str(len(data['红悬停'])) + "只, 大波浪" + str(len(data['大波浪'])) + "只, 高业绩" + str(len(data['高业绩'])) + "只")
+print("结果: 补票" + str(len(data['补票'])) + "只, 回头" + str(len(data['TePu'])) + "只, 填坑" + str(len(data['填坑'])) + "只, 跳高" + str(len(data['红悬停'])) + "只, 大波" + str(len(data['大波浪'])) + "只, 实力" + str(len(data['高业绩'])) + "只")
