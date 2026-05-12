@@ -7,13 +7,27 @@ sys.path.insert(0, str(PROJECT_ROOT / 'src'))
 from utils.log_config import get_logger
 logger = get_logger("生成ETF列表")
 """生成ETF indicators目录清单到 today/etf_list.json"""
-import json, csv
+import json, csv, pandas as pd
 
 DATA_DIR = PROJECT_ROOT / 'data/etf'
 IND_DIR  = Path('/home/bange/stock/daily_result/today/indicators_etf')
 OUT     = Path('/home/bange/stock/daily_result/today/etf_list.json')
 
 etf_list_path = DATA_DIR / 'etf_list.csv'
+
+def get_latest_amount(ts_code: str) -> float:
+    """从各ETF的CSV读取最新交易日的amount（用于排序）"""
+    csv_path = DATA_DIR / f'{ts_code}.csv'
+    if not csv_path.exists() or csv_path.stat().st_size < 100:
+        return 0.0
+    try:
+        df = pd.read_csv(csv_path, usecols=['date','amount'], parse_dates=['date'])
+        if df.empty:
+            return 0.0
+        latest = df.sort_values('date').iloc[-1]
+        return float(latest['amount']) if not pd.isna(latest['amount']) else 0.0
+    except Exception:
+        return 0.0
 
 # 按benchmark分组
 bench_data = {}
@@ -22,10 +36,10 @@ with open(etf_list_path) as f:
         ts_code = row['ts_code'].strip()
         name    = row['name'].strip()
         bench   = row.get('benchmark', '') or '未知指数'
-        amount  = float(row.get('amount') or 0)
         # 只包含有indicators的ETF
         if not (IND_DIR / f'{ts_code}.json').exists():
             continue
+        amount = get_latest_amount(ts_code)
         bench_data.setdefault(bench, []).append({
             'ts_code': ts_code,
             'name': name,
