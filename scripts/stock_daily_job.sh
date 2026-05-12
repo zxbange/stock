@@ -80,7 +80,7 @@ print(f'更新了 {len(names)} 只股票的中文名')"
 
 # ═══════════════════════════════════════════════════════════════════
 # ETF K线数据处理流程（重要修复记录）
-#   1. get_etf_baostock.py: 必须加 adj='qfq' 参数下载（基金专用接口）
+#   1. get_etf.py: 必须加 adj='qfq' 参数下载（基金专用接口）
 #   2. load_csv_etf 列映射（CSV格式: ts_code,date,pre_close,open,high,low,close,change,pct_chg,volume,amount）:
 #        正确: o=c[3], h=c[4], l=c[5], c=c[6], v=c[9]
 #        错误: o=c[2], h=c[3], l=c[4], c=c[5]  （把pre_close/open/high/low全部读错了）
@@ -91,7 +91,7 @@ print(f'更新了 {len(names)} 只股票的中文名')"
 
 # ========== 步骤6：下载ETF K线数据 ==========
 echo "[$(date)] 下载ETF K线数据（adj='qfq'前复权）..."
-python3 "$SRC/data_fetch/get_etf_baostock.py"
+python3 "$SRC/data_fetch/get_etf.py"
 
 # ========== 步骤7：预计算ETF指标 ==========
 echo "[$(date)] 预计算ETF指标（日线+周线+月线，fund_adj因子前复权）..."
