@@ -97,7 +97,12 @@ def load_csv_stock(code):
 def load_csv_etf(code):
     """加载ETF日K线，CSV格式：ts_code,date,pre_close,open,high,low,close,change,pct_chg,volume,amount,adj_factor
     前复权公式: adj_price = raw_price × 当日因子 ÷ 最新因子
-    效果: 把分拆/折算前价格压缩到分拆后水平，K线自然连续。"""
+    效果: 把分拆/折算前价格压缩到分拆后水平，K线自然连续。
+
+    ⚠️ 重要修复记录（2026-05-12）：
+    最新因子必须取"距今最近日期"的因子，不能用max(factor)。
+    原因：部分基金拆分导致历史因子数值反而大于最新因子，
+    用max会导致历史价格被压缩过度，K线失真。"""
     path = os.path.join(DATA_DIR_ETF, f'{code}.csv')
     if not os.path.exists(path):
         return []
@@ -111,7 +116,11 @@ def load_csv_etf(code):
             if len(c) < 11:
                 continue
             d = c[1]
-            date_fmt = f"{d[:4]}-{d[4:6]}-{d[6:8]}"
+            # d 可能是 YYYYMMDD 或 YYYY-MM-DD
+            if '-' in d:
+                date_fmt = d  # 已经是YYYY-MM-DD格式
+            else:
+                date_fmt = f"{d[:4]}-{d[4:6]}-{d[6:8]}"
             # adj_factor在col 11（索引11），无则默认为1.0
             factor = float(c[11]) if len(c) > 11 and c[11] else 1.0
             rows_raw.append({
@@ -127,8 +136,10 @@ def load_csv_etf(code):
     if not rows_raw:
         return []
 
-    # 最新因子 = 最大因子（距今最近的日期）
-    latest_factor = max(r['factor'] for r in rows_raw) if rows_raw else 1.0
+    # 最新因子 = 最新日期（距今最近）对应的因子，不是max(factor)
+    # 原因：因子大小≠日期远近，部分基金拆分导致历史因子反而大于最新因子
+    latest_row = max(rows_raw, key=lambda r: r['time'])
+    latest_factor = latest_row['factor']
     if latest_factor == 0:
         latest_factor = 1.0
 
