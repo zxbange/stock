@@ -177,10 +177,11 @@ def plan_download(ts_code: str, sina_code: str = None) -> tuple | None:
 # ============================================================
 # 保存ETF数据
 # ============================================================
-def save_etf_data(ts_code: str, df: pd.DataFrame, is_sina: bool = False):
+def save_etf_data(ts_code: str, df: pd.DataFrame, adj_df: pd.DataFrame = None, is_sina: bool = False):
     """
     将 df 保存到 DATA_DIR/ts_code.csv
     is_sina=True: 需做 volume÷100、amount=vol×close÷10、adj_factor=1.0
+    is_sina=False: Tushare数据，从adj_df合并adj_factor
     """
     path = DATA_DIR / f"{ts_code}.csv"
     df = df.copy()
@@ -203,13 +204,21 @@ def save_etf_data(ts_code: str, df: pd.DataFrame, is_sina: bool = False):
         # ts_code 列
         df.insert(0, "ts_code", ts_code)
     else:
-        # Tushare: trade_date→date, vol→volume, adj_factor=1.0
+        # Tushare: trade_date→date, vol→volume
         if "trade_date" in df.columns:
             df["date"] = pd.to_datetime(df["trade_date"].astype(str))
             df = df.drop(columns=["trade_date"])
         if "vol" in df.columns:
             df["volume"] = df.pop("vol")
-        df["adj_factor"] = 1.0
+        # 合并adj_factor
+        if adj_df is not None and not adj_df.empty:
+            adj_df = adj_df.copy()
+            adj_df["date"] = pd.to_datetime(adj_df["trade_date"].astype(str))
+            adj_df = adj_df[["date", "adj_factor"]]
+            df = df.merge(adj_df, on="date", how="left")
+            df["adj_factor"] = df["adj_factor"].fillna(1.0)
+        else:
+            df["adj_factor"] = 1.0
 
     df = df.sort_values("date").reset_index(drop=True)
 
@@ -280,7 +289,7 @@ def main():
                 try:
                     df, adj_df = fut.result()
                     if df is not None and adj_df is not None:
-                        save_etf_data(code, df, is_sina=False)
+                        save_etf_data(code, df, adj_df, is_sina=False)
                         success += 1
                     else:
                         fail += 1
