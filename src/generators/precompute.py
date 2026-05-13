@@ -277,6 +277,7 @@ def collect_selected_codes():
 def run(source, mode, codes=None):
     global OUT_DIR
     OUT_DIR = os.path.join(TODAY_DIR, 'indicators_etf' if source == 'etf' else 'indicators')
+    os.makedirs(OUT_DIR, exist_ok=True)  # 确保输出目录存在
     if codes is None:
         # 全量模式：从目录加载所有CSV
         if source == 'stock':
