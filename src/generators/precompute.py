@@ -154,15 +154,26 @@ def load_csv_etf(code):
     rows = []
     for r in rows_raw:
         f = r['factor']
-        rows.append({
-            'time': r['time'],
-            # 前复权: raw × factor ÷ latest_factor
-            'o': round(r['o'] * f / latest_factor, 4),
-            'h': round(r['h'] * f / latest_factor, 4),
-            'l': round(r['l'] * f / latest_factor, 4),
-            'c': round(r['c'] * f / latest_factor, 4),
-            'v': r['v'],
-        })
+        if f == 1.0:
+            # factor=1.0表示价格已经是当前等效，不需要调整
+            rows.append({
+                'time': r['time'],
+                'o': round(r['o'], 4),
+                'h': round(r['h'], 4),
+                'l': round(r['l'], 4),
+                'c': round(r['c'], 4),
+                'v': r['v'],
+            })
+        else:
+            # factor < 1.0，用前复权公式
+            rows.append({
+                'time': r['time'],
+                'o': round(r['o'] * f / latest_factor, 4),
+                'h': round(r['h'] * f / latest_factor, 4),
+                'l': round(r['l'] * f / latest_factor, 4),
+                'c': round(r['c'] * f / latest_factor, 4),
+                'v': r['v'],
+            })
     return rows
 
 def aggregate(rows, freq):
