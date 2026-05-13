@@ -291,10 +291,9 @@ function render(rows, ind, period) {
   }
 
   // 默认显示最新200根蜡烛，右边留10px空距
-  // 通过缩小容器宽度10px实现右边距效果
-  var COUNT = 200;
+  var COUNT = 200, gapPx = 10;
   var w = document.getElementById('p1').clientWidth || 800;
-  var gapPx = 10;
+  var h1 = 430, h2 = 100, h3 = 100, h4 = 100;
   var autoBarSpacing = Math.max(3, (w - gapPx) / (COUNT + 1));
   // 先隐藏图表防止闪烁
   document.getElementById('p1').style.visibility = 'hidden';
@@ -307,6 +306,10 @@ function render(rows, ind, period) {
     document.getElementById('p2').style.width = (w - gapPx) + 'px';
     document.getElementById('p3').style.width = (w - gapPx) + 'px';
     document.getElementById('p4').style.width = (w - gapPx) + 'px';
+    ch1.resize(w - gapPx, h1);
+    ch2.resize(w - gapPx, h2);
+    ch3.resize(w - gapPx, h3);
+    ch4.resize(w - gapPx, h4);
     ch1.applyOptions({timeScale: {barSpacing: autoBarSpacing}});
     ch2.applyOptions({timeScale: {barSpacing: autoBarSpacing}});
     ch3.applyOptions({timeScale: {barSpacing: autoBarSpacing}});
