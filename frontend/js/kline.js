@@ -4,6 +4,7 @@ var _rows = null, _ind = null;
 var cd1 = null, vl = null, difL = null, deaL = null, macdB = null, kL = null, dL = null, jL = null;
 var _curCode = null, _curPeriod = 'D';
 var _sidebarCollapsed = false;
+var _initRangeSet = false;  // 标记是否已设置过初始范围，避免重复应用
 
 var _maWindows = [5,10,20,30,60,120,240];
 var _maColors = {5:'#ffea00',10:'#ff9800',20:'#00bcd4',30:'#e040fb',60:'#00e676',120:'#888888',240:'#666666'};
@@ -290,42 +291,41 @@ function render(rows, ind, period) {
     setInfo('info4', '<div>K:<span style="color:#ffea00">' + f2(ind.K[N-1]) + '</span> D:<span style="color:#ff9800">' + f2(ind.D[N-1]) + '</span> J:<span style="color:#e040fb">' + f2(ind.J ? ind.J[N-1] : null) + '</span></div>');
   }
 
-  // 默认显示最新200根蜡烛，右边留10px空距
-  var COUNT = 200, gapPx = 10;
-  var w = document.getElementById('p1').clientWidth || 800;
-  var h1 = 430, h2 = 100, h3 = 100, h4 = 100;
-  var autoBarSpacing = Math.max(3, (w - gapPx) / (COUNT + 1));
-  // 先隐藏图表防止闪烁
-  document.getElementById('p1').style.visibility = 'hidden';
-  document.getElementById('p2').style.visibility = 'hidden';
-  document.getElementById('p3').style.visibility = 'hidden';
-  document.getElementById('p4').style.visibility = 'hidden';
-  setTimeout(function() {
-    // 缩小容器宽度实现右边10px空距
-    document.getElementById('p1').style.width = (w - gapPx) + 'px';
-    document.getElementById('p2').style.width = (w - gapPx) + 'px';
-    document.getElementById('p3').style.width = (w - gapPx) + 'px';
-    document.getElementById('p4').style.width = (w - gapPx) + 'px';
-    ch1.resize(w - gapPx, h1);
-    ch2.resize(w - gapPx, h2);
-    ch3.resize(w - gapPx, h3);
-    ch4.resize(w - gapPx, h4);
-    ch1.applyOptions({timeScale: {barSpacing: autoBarSpacing}});
-    ch2.applyOptions({timeScale: {barSpacing: autoBarSpacing}});
-    ch3.applyOptions({timeScale: {barSpacing: autoBarSpacing}});
-    ch4.applyOptions({timeScale: {barSpacing: autoBarSpacing}});
-    // 用logical range直接限制显示范围到最后200根
-    var fromIdx = Math.max(0, N - COUNT);
-    ch1.timeScale().setVisibleLogicalRange({from: fromIdx, to: N - 1});
-    ch2.timeScale().setVisibleLogicalRange({from: fromIdx, to: N - 1});
-    ch3.timeScale().setVisibleLogicalRange({from: fromIdx, to: N - 1});
-    ch4.timeScale().setVisibleLogicalRange({from: fromIdx, to: N - 1});
-    // 立即显示图表
-    document.getElementById('p1').style.visibility = 'visible';
-    document.getElementById('p2').style.visibility = 'visible';
-    document.getElementById('p3').style.visibility = 'visible';
-    document.getElementById('p4').style.visibility = 'visible';
-  }, 100);
+  // 初始设置：只执行一次（首次render时）
+  if (!_initRangeSet) {
+    _initRangeSet = true;
+    var COUNT = 200, gapPx = 10;
+    var w = document.getElementById('p1').clientWidth || 800;
+    var h1 = 430, h2 = 100, h3 = 100, h4 = 100;
+    var autoBarSpacing = Math.max(3, (w - gapPx) / (COUNT + 1));
+    // 先隐藏图表防止闪烁
+    document.getElementById('p1').style.visibility = 'hidden';
+    document.getElementById('p2').style.visibility = 'hidden';
+    document.getElementById('p3').style.visibility = 'hidden';
+    document.getElementById('p4').style.visibility = 'hidden';
+    setTimeout(function() {
+      // 缩小图表尺寸实现右边10px空距
+      ch1.resize(w - gapPx, h1);
+      ch2.resize(w - gapPx, h2);
+      ch3.resize(w - gapPx, h3);
+      ch4.resize(w - gapPx, h4);
+      ch1.applyOptions({timeScale: {barSpacing: autoBarSpacing}});
+      ch2.applyOptions({timeScale: {barSpacing: autoBarSpacing}});
+      ch3.applyOptions({timeScale: {barSpacing: autoBarSpacing}});
+      ch4.applyOptions({timeScale: {barSpacing: autoBarSpacing}});
+      // 用logical range直接限制显示范围到最后200根
+      var fromIdx = Math.max(0, N - COUNT);
+      ch1.timeScale().setVisibleLogicalRange({from: fromIdx, to: N - 1});
+      ch2.timeScale().setVisibleLogicalRange({from: fromIdx, to: N - 1});
+      ch3.timeScale().setVisibleLogicalRange({from: fromIdx, to: N - 1});
+      ch4.timeScale().setVisibleLogicalRange({from: fromIdx, to: N - 1});
+      // 显示图表
+      document.getElementById('p1').style.visibility = 'visible';
+      document.getElementById('p2').style.visibility = 'visible';
+      document.getElementById('p3').style.visibility = 'visible';
+      document.getElementById('p4').style.visibility = 'visible';
+    }, 100);
+  }
 }
 
 function selectStock(el, code) {
