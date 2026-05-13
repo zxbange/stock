@@ -113,7 +113,7 @@ function createCharts() {
     layout: { background: { color: '#111122' }, textColor: '#888' },
     grid: { vertLines: { color: '#1e1e2e' }, horzLines: { color: '#1e1e2e' } },
     rightPriceScale: { borderVisible: false, visible: false },
-    timeScale: { borderVisible: false, timeVisible: true, rightOffset: 5 },
+    timeScale: { borderVisible: false, timeVisible: true, rightOffset: 5, fixLeftEdge: true, fixRightEdge: false },
     crosshair: { mode: LightweightCharts.CrosshairMode.Normal }
   });
   cd1 = ch1.addCandlestickSeries({
@@ -290,8 +290,15 @@ function render(rows, ind, period) {
     setInfo('info4', '<div>K:<span style="color:#ffea00">' + f2(ind.K[N-1]) + '</span> D:<span style="color:#ff9800">' + f2(ind.D[N-1]) + '</span> J:<span style="color:#e040fb">' + f2(ind.J ? ind.J[N-1] : null) + '</span></div>');
   }
 
-  // 默认显示全部蜡烛，scrollToRealTime()将最后1根定位到右边缘，rightOffset=5留出右边距
+  // 默认显示最新200根蜡烛，barSpacing让200根+5根右边距填满容器，fixLeftEdge锁定左边
+  var COUNT = 200, MARGIN = 5, TOTAL = COUNT + MARGIN;
+  var w = document.getElementById('p1').clientWidth || 800;
+  var autoBarSpacing = Math.max(3, w / TOTAL);
   setTimeout(function() {
+    ch1.applyOptions({timeScale: {barSpacing: autoBarSpacing}});
+    ch2.applyOptions({timeScale: {barSpacing: autoBarSpacing}});
+    ch3.applyOptions({timeScale: {barSpacing: autoBarSpacing}});
+    ch4.applyOptions({timeScale: {barSpacing: autoBarSpacing}});
     ch1.timeScale().fitContent();
     setTimeout(function() {
       ch1.timeScale().scrollToRealTime();
