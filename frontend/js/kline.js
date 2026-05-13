@@ -290,10 +290,12 @@ function render(rows, ind, period) {
     setInfo('info4', '<div>K:<span style="color:#ffea00">' + f2(ind.K[N-1]) + '</span> D:<span style="color:#ff9800">' + f2(ind.D[N-1]) + '</span> J:<span style="color:#e040fb">' + f2(ind.J ? ind.J[N-1] : null) + '</span></div>');
   }
 
-  // 默认显示最新200根蜡烛，barSpacing让200根填满容器，setVisibleLogicalRange限制范围
+  // 默认显示最新200根蜡烛，右边留10px空距
+  // scrollToRealTime让最后1根在右边缘(受rightOffset影响)，但会显示全部蜡烛
+  // 所以先用scrollToRealTime定位，再用scrollToPosition(N-200)向左滚动
   var COUNT = 200;
   var w = document.getElementById('p1').clientWidth || 800;
-  var autoBarSpacing = Math.max(3, w / (COUNT + 1));
+  var autoBarSpacing = Math.max(3, w / (COUNT + 2));
   // 先隐藏图表防止闪烁
   document.getElementById('p1').style.visibility = 'hidden';
   document.getElementById('p2').style.visibility = 'hidden';
@@ -304,17 +306,26 @@ function render(rows, ind, period) {
     ch2.applyOptions({timeScale: {barSpacing: autoBarSpacing}});
     ch3.applyOptions({timeScale: {barSpacing: autoBarSpacing}});
     ch4.applyOptions({timeScale: {barSpacing: autoBarSpacing}});
-    // 用logical range直接限制显示范围到最后200根
-    var fromIdx = Math.max(0, N - COUNT);
-    ch1.timeScale().setVisibleLogicalRange({from: fromIdx, to: N - 1});
-    ch2.timeScale().setVisibleLogicalRange({from: fromIdx, to: N - 1});
-    ch3.timeScale().setVisibleLogicalRange({from: fromIdx, to: N - 1});
-    ch4.timeScale().setVisibleLogicalRange({from: fromIdx, to: N - 1});
-    // 立即显示图表
-    document.getElementById('p1').style.visibility = 'visible';
-    document.getElementById('p2').style.visibility = 'visible';
-    document.getElementById('p3').style.visibility = 'visible';
-    document.getElementById('p4').style.visibility = 'visible';
+    ch1.timeScale().fitContent();
+    setTimeout(function() {
+      // scrollToRealTime让最后1根定位到右边缘(rightOffset空出10px)
+      ch1.timeScale().scrollToRealTime();
+      ch2.timeScale().scrollToRealTime();
+      ch3.timeScale().scrollToRealTime();
+      ch4.timeScale().scrollToRealTime();
+      // 再向左滚动N-200根，让200根蜡烛显示在可见区域
+      var scrollBy = N - COUNT;
+      var sp = ch1.timeScale().scrollPosition();
+      ch1.timeScale().scrollToPosition(sp - scrollBy, true);
+      ch2.timeScale().scrollToPosition(sp - scrollBy, true);
+      ch3.timeScale().scrollToPosition(sp - scrollBy, true);
+      ch4.timeScale().scrollToPosition(sp - scrollBy, true);
+      // 显示图表
+      document.getElementById('p1').style.visibility = 'visible';
+      document.getElementById('p2').style.visibility = 'visible';
+      document.getElementById('p3').style.visibility = 'visible';
+      document.getElementById('p4').style.visibility = 'visible';
+    }, 500);
   }, 100);
 }
 
