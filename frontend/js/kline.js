@@ -14,7 +14,7 @@ var _stockNames = {};
 
 // 加载股票中文名
 (function() {
-  fetch('/stock_names.json?v=210533').then(function(r) { return r.json(); })
+  fetch('/stock_names.json?v=210534').then(function(r) { return r.json(); })
   .then(function(names) {
     _stockNames = names;
   }).catch(function() {});
@@ -290,16 +290,15 @@ function render(rows, ind, period) {
     setInfo('info4', '<div>K:<span style="color:#ffea00">' + f2(ind.K[N-1]) + '</span> D:<span style="color:#ff9800">' + f2(ind.D[N-1]) + '</span> J:<span style="color:#e040fb">' + f2(ind.J ? ind.J[N-1] : null) + '</span></div>');
   }
 
-  // 默认显示最新200根蜡烛
-  var N = rows.length;
-  var COUNT = 205;  // 默认显示根数，多出几根作为右边距
-  var fromTime = rows[Math.max(0, N - COUNT)].time;
-  var toTime = rows[N - 1].time;
+  // 默认显示最新200根蜡烛，左边留5根空位作右边距效果
+  var COUNT = 205;
+  var fromIdx = Math.max(0, N - COUNT);
+  var toIdx = N - 1;
   try {
-    ch1.timeScale().setVisibleRange({ from: fromTime, to: toTime });
-    ch2.timeScale().setVisibleRange({ from: fromTime, to: toTime });
-    ch3.timeScale().setVisibleRange({ from: fromTime, to: toTime });
-    ch4.timeScale().setVisibleRange({ from: fromTime, to: toTime });
+    ch1.timeScale().setVisibleRange({ from: rows[fromIdx].time, to: rows[toIdx].time });
+    ch2.timeScale().setVisibleRange({ from: rows[fromIdx].time, to: rows[toIdx].time });
+    ch3.timeScale().setVisibleRange({ from: rows[fromIdx].time, to: rows[toIdx].time });
+    ch4.timeScale().setVisibleRange({ from: rows[fromIdx].time, to: rows[toIdx].time });
   } catch(e) { ch1.timeScale().fitContent(); }
 }
 
