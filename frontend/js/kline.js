@@ -14,7 +14,7 @@ var _stockNames = {};
 
 // 加载股票中文名
 (function() {
-  fetch('/stock_names.json?v=210534').then(function(r) { return r.json(); })
+  fetch('/stock_names.json?v=210535').then(function(r) { return r.json(); })
   .then(function(names) {
     _stockNames = names;
   }).catch(function() {});
@@ -113,7 +113,7 @@ function createCharts() {
     layout: { background: { color: '#111122' }, textColor: '#888' },
     grid: { vertLines: { color: '#1e1e2e' }, horzLines: { color: '#1e1e2e' } },
     rightPriceScale: { borderVisible: false, visible: false },
-    timeScale: { borderVisible: false, timeVisible: true },
+    timeScale: { borderVisible: false, timeVisible: true, rightOffset: 5 },
     crosshair: { mode: LightweightCharts.CrosshairMode.Normal }
   });
   cd1 = ch1.addCandlestickSeries({
@@ -291,7 +291,7 @@ function render(rows, ind, period) {
   }
 
   // 默认显示最新200根蜡烛，左边留5根空位作右边距效果
-  var COUNT = 205;
+  var COUNT = 200;
   var fromIdx = Math.max(0, N - COUNT);
   var toIdx = N - 1;
   try {
