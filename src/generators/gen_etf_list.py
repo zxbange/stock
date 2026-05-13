@@ -14,6 +14,22 @@ IND_DIR  = Path('/home/bange/stock/daily_result/today/indicators_etf')
 OUT     = Path('/home/bange/stock/daily_result/today/etf_list.json')
 
 etf_list_path = DATA_DIR / 'etf_list.csv'
+BLACKLIST_FILE = PROJECT_ROOT / 'etf_blacklist.txt'
+
+def load_blacklist():
+    """加载黑名单ETF列表"""
+    bl = set()
+    if BLACKLIST_FILE.exists():
+        with open(BLACKLIST_FILE, 'r', encoding='utf-8') as f:
+            for line in f:
+                code = line.strip()
+                if code:
+                    bl.add(code)
+    return bl
+
+blacklist = load_blacklist()
+if blacklist:
+    print(f"黑名单: {len(blacklist)} 只，将被过滤")
 
 def get_latest_amount(ts_code: str) -> float:
     """从各ETF的CSV读取最新交易日的amount（用于排序）"""
@@ -36,6 +52,9 @@ with open(etf_list_path) as f:
         ts_code = row['ts_code'].strip()
         name    = row['name'].strip()
         bench   = row.get('benchmark', '') or '未知指数'
+        # 跳过黑名单ETF
+        if blacklist and ts_code in blacklist:
+            continue
         # 只包含有indicators的ETF
         if not (IND_DIR / f'{ts_code}.json').exists():
             continue

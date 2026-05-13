@@ -28,7 +28,19 @@ PROJECT_ROOT = Path(__file__).parent.parent.parent
 
 # ---------- 常量 ----------
 DATA_DIR = PROJECT_ROOT / "data/etf"
+BLACKLIST_FILE = PROJECT_ROOT / "etf_blacklist.txt"
 MAX_WORKERS = 4
+
+def load_blacklist():
+    """加载黑名单ETF列表"""
+    bl = set()
+    if BLACKLIST_FILE.exists():
+        with open(BLACKLIST_FILE, 'r', encoding='utf-8') as f:
+            for line in f:
+                code = line.strip()
+                if code:
+                    bl.add(code)
+    return bl
 START_DATE = "20140101"
 END_DATE   = datetime.now().strftime("%Y%m%d")
 
@@ -275,6 +287,11 @@ def main():
     if tushare_ok:
         # ---------- Tushare模式 ----------
         all_codes = etf_df["ts_code"].tolist()
+        # 加载黑名单过滤
+        blacklist = load_blacklist()
+        if blacklist:
+            all_codes = [c for c in all_codes if c not in blacklist]
+            logger.info("黑名单过滤后: %d 只", len(all_codes))
         logger.info("需下载ETF总数: %d 只", len(all_codes))
 
         # 增量判断
@@ -317,6 +334,11 @@ def main():
         etf_df = get_etf_list_baostock()
         etf_df = enrich_etf_df(etf_df)
         all_records = etf_df[["bao_code", "sina_code", "ts_code"]].to_dict("records")
+        # 加载黑名单过滤
+        blacklist = load_blacklist()
+        if blacklist:
+            all_records = [r for r in all_records if r["ts_code"] not in blacklist]
+            logger.info("黑名单过滤后: %d 只", len(all_records))
         logger.info("ETF总数: %d 只", len(all_records))
 
         # 增量判断（基于Sina代码）

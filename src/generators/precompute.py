@@ -43,6 +43,18 @@ TODAY_DIR      = '/home/bange/stock/daily_result/today'
 OUT_DIR        = os.path.join(TODAY_DIR, 'indicators')
 os.makedirs(OUT_DIR, exist_ok=True)
 
+# 加载黑名单
+BLACKLIST_FILE = PROJECT_ROOT / 'etf_blacklist.txt'
+_blacklist = set()
+if BLACKLIST_FILE.exists():
+    with open(BLACKLIST_FILE, 'r', encoding='utf-8') as f:
+        for line in f:
+            code = line.strip()
+            if code:
+                _blacklist.add(code)
+if _blacklist:
+    print(f"黑名单ETF: {len(_blacklist)} 只，预计算将跳过")
+
 # ─── 共用指标计算 ───────────────────────────────────────────────────────────
 
 def ema(arr, n):
@@ -275,6 +287,10 @@ def run(source, mode, codes=None):
             loader = load_csv_etf
         files = glob.glob(os.path.join(data_dir, '*.csv'))
         codes = [os.path.basename(f).replace('.csv', '') for f in files]
+        # 过滤黑名单ETF
+        if source == 'etf' and _blacklist:
+            codes = [c for c in codes if c not in _blacklist]
+        codes.sort()
 
     print(f'[{source}] 预计算 {len(codes)} 个，输出到 {OUT_DIR}')
 
