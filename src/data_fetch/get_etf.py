@@ -162,11 +162,19 @@ def plan_download(ts_code: str, sina_code: str = None) -> tuple | None:
     path = DATA_DIR / f"{ts_code}.csv"
     if path.exists() and path.stat().st_size > 100:
         try:
-            existing = pd.read_csv(path, usecols=["date"], parse_dates=["date"])
+            existing = pd.read_csv(path, parse_dates=["date"])
             last_date = existing["date"].max().strftime("%Y-%m-%d")
             today_str = datetime.now().strftime("%Y-%m-%d")
             if last_date >= today_str:
-                return None
+                # 检查最后一条adj_factor是否有效（不为1.0或空）
+                last_row = existing[existing["date"].dt.strftime("%Y-%m-%d") == last_date]
+                if len(last_row) > 0:
+                    last_factor = last_row.iloc[0].get("adj_factor", None)
+                    # adj_factor=1.0说明是Sina数据或旧数据，需要重新下载更新
+                    if last_factor and float(last_factor) != 1.0:
+                        return None  # 数据有效，跳过
+                # adj_factor无效或为1.0，从头全量下载
+                return (ts_code, sina_code, "2014-01-01", True)
             next_day = (pd.to_datetime(last_date) + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
             return (ts_code, sina_code, next_day, False)
         except Exception:
