@@ -45,13 +45,13 @@ _lock = threading.Lock()
 _last_call = 0.0
 
 def rate_call(func, **kwargs):
-    """限速: 每次调用间隔 >0.2秒"""
+    """限速: 每分钟约240次，即每次调用间隔>0.25秒"""
     global _last_call
     with _lock:
         now = time.time()
         elapsed = now - _last_call
-        if elapsed < 0.2:
-            time.sleep(0.2 - elapsed)
+        if elapsed < 0.25:
+            time.sleep(0.25 - elapsed)
         _last_call = time.time()
     return func(**kwargs)
 
