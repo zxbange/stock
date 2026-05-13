@@ -49,7 +49,10 @@ function loadSidebar() {
   var byStrat = {};
 
   strats.forEach(function(strat) {
-    fetch(_baseDir + 'result_' + strat + '.txt').then(function(r) {
+    var url = _baseDir + 'result_' + strat + '.txt';
+    if (strat === 'xulilong') { console.log('[DEBUG] Fetching:', url); }
+    fetch(url).then(function(r) {
+      if (strat === 'xulilong') { console.log('[DEBUG] Response:', r.status, r.ok); }
       if (!r.ok) return [];
       return r.text();
     }).then(function(text) {
