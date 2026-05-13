@@ -215,7 +215,11 @@ def save_etf_data(ts_code: str, df: pd.DataFrame, adj_df: pd.DataFrame = None, i
             adj_df = adj_df.copy()
             adj_df["date"] = pd.to_datetime(adj_df["trade_date"].astype(str))
             adj_df = adj_df[["date", "adj_factor"]]
-            df = df.merge(adj_df, on="date", how="left")
+            df = df.merge(adj_df, on="date", how="left", suffixes=("_old", ""))
+            # 合并后adj_factor优先用新数据(old列有值但new列为NaN时用old)
+            if "adj_factor_old" in df.columns:
+                df["adj_factor"] = df["adj_factor"].fillna(df["adj_factor_old"])
+                df = df.drop(columns=["adj_factor_old"])
             df["adj_factor"] = df["adj_factor"].fillna(1.0)
         else:
             df["adj_factor"] = 1.0
@@ -230,7 +234,7 @@ def save_etf_data(ts_code: str, df: pd.DataFrame, adj_df: pd.DataFrame = None, i
         try:
             existing = pd.read_csv(path, parse_dates=["date"])
             df = pd.concat([existing, df], ignore_index=True)
-            df = df.drop_duplicates(subset=["date"]).sort_values("date").reset_index(drop=True)
+            df = df.drop_duplicates(subset=["date"], keep="last").sort_values("date").reset_index(drop=True)
         except Exception as e:
             logger.warning("合并 %s 失败，重新写入: %s", ts_code, e)
 
