@@ -56,6 +56,7 @@ function loadSidebar() {
       var lines = text.trim().split('\n');
       // 首行是战法名，跳过；提取股票代码（支持纯码或带备注的格式）
       var codes = lines.slice(1).filter(function(l) { return /^\d{6}\.(SZ|SH|BJ)/.test(l.trim()); }).map(function(l) { return l.trim().substring(0, 9); });
+      if (strat === 'xulilong') { console.log('[DEBUG] xulilong loaded, lines:', lines.length, 'codes:', codes.length, 'first 3:', codes.slice(0,3)); }
       byStrat[strat] = codes;
       loaded++;
       if (loaded === strats.length) {
