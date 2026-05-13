@@ -270,8 +270,10 @@ def collect_selected_codes():
         with open(f) as fp:
             for line in fp:
                 line = line.strip()
-                if re.match(r'^\d{6}\.(?:SZ|SH|BJ)$', line):
-                    codes.add(line)
+                # 支持纯码格式(000063.SZ)和带备注格式(601138.SH 2026-05-13 ...)
+                m = re.match(r'^(\d{6}\.(?:SZ|SH|BJ))', line)
+                if m:
+                    codes.add(m.group(1))
     return sorted(codes)
 
 def run(source, mode, codes=None):
