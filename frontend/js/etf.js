@@ -224,6 +224,7 @@ function createCharts() {
     ch1 = ch2 = ch3 = ch4 = null;
     cd1 = vl = difL = deaL = macdB = kL = dL = jL = null;
     _maLines = {};
+    _initRangeSet = false;  // 重置图表时也要重置此标志
     createCharts();
   }
 }
