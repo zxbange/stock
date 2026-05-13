@@ -141,8 +141,9 @@ def load_csv_etf(code):
                 date_fmt = d  # 已经是YYYY-MM-DD格式
             else:
                 date_fmt = f"{d[:4]}-{d[4:6]}-{d[6:8]}"
-            # adj_factor在col 11（索引11），无则默认为1.0
-            factor = float(c[11]) if len(c) > 11 and c[11] else 1.0
+            # adj_factor在col 12（索引11），无/空/NaN则用latest_factor替代，保证K线连续
+            raw_factor_str = c[11].strip() if len(c) > 11 else ''
+            factor = float(raw_factor_str) if raw_factor_str else None
             rows_raw.append({
                 'time': date_fmt,
                 'factor': factor,
@@ -160,15 +161,15 @@ def load_csv_etf(code):
     # 原因：因子大小≠日期远近，部分基金拆分导致历史因子反而大于最新因子
     latest_row = max(rows_raw, key=lambda r: r['time'])
     latest_factor = latest_row['factor']
-    if latest_factor == 0:
+    if latest_factor is None or latest_factor == 0:
         latest_factor = 1.0
 
     rows = []
     for r in rows_raw:
-        f = r['factor']
+        f = r['factor'] if r['factor'] is not None else latest_factor
         rows.append({
             'time': r['time'],
-            # 前复权: raw × factor ÷ latest_factor
+            # 前复权: raw × factor ÷ latest_factor（factor=None时用latest_factor，相当于不做调整）
             'o': round(r['o'] * f / latest_factor, 4),
             'h': round(r['h'] * f / latest_factor, 4),
             'l': round(r['l'] * f / latest_factor, 4),
