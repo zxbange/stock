@@ -113,7 +113,7 @@ function createCharts() {
     layout: { background: { color: '#111122' }, textColor: '#888' },
     grid: { vertLines: { color: '#1e1e2e' }, horzLines: { color: '#1e1e2e' } },
     rightPriceScale: { borderVisible: false, visible: false },
-    timeScale: { borderVisible: false, timeVisible: true, rightMargin: 10 },
+    timeScale: { borderVisible: false, timeVisible: true },
     crosshair: { mode: LightweightCharts.CrosshairMode.Normal }
   });
   cd1 = ch1.addCandlestickSeries({
@@ -292,7 +292,8 @@ function render(rows, ind, period) {
 
   // 默认显示最新200根蜡烛
   var N = rows.length;
-  var fromTime = rows[Math.max(0, N - 200)].time;
+  var COUNT = 205;  // 默认显示根数，多出几根作为右边距
+  var fromTime = rows[Math.max(0, N - COUNT)].time;
   var toTime = rows[N - 1].time;
   try {
     ch1.timeScale().setVisibleRange({ from: fromTime, to: toTime });
