@@ -113,7 +113,7 @@ function createCharts() {
     layout: { background: { color: '#111122' }, textColor: '#888' },
     grid: { vertLines: { color: '#1e1e2e' }, horzLines: { color: '#1e1e2e' } },
     rightPriceScale: { borderVisible: false, visible: false },
-    timeScale: { borderVisible: false, timeVisible: true, rightOffset: 5, fixLeftEdge: true, fixRightEdge: false },
+    timeScale: { borderVisible: false, timeVisible: true, rightOffset: 5, fixLeftEdge: false, fixRightEdge: true },
     crosshair: { mode: LightweightCharts.CrosshairMode.Normal }
   });
   cd1 = ch1.addCandlestickSeries({
@@ -290,11 +290,11 @@ function render(rows, ind, period) {
     setInfo('info4', '<div>K:<span style="color:#ffea00">' + f2(ind.K[N-1]) + '</span> D:<span style="color:#ff9800">' + f2(ind.D[N-1]) + '</span> J:<span style="color:#e040fb">' + f2(ind.J ? ind.J[N-1] : null) + '</span></div>');
   }
 
-  // 默认显示最新200根蜡烛，barSpacing让200根+5根右边距填满容器，fixLeftEdge锁定左边
+  // 默认显示最新200根蜡烛，barSpacing让200根+5根右边距填满容器，fixRightEdge锁定右边
   var COUNT = 200, MARGIN = 5, TOTAL = COUNT + MARGIN;
   var w = document.getElementById('p1').clientWidth || 800;
   var autoBarSpacing = Math.max(3, w / TOTAL);
-  // 先隐藏图表防止闪烁，等scroll完成后再显示
+  // 先隐藏图表防止闪烁，等设置完成后再显示
   document.getElementById('p1').style.visibility = 'hidden';
   document.getElementById('p2').style.visibility = 'hidden';
   document.getElementById('p3').style.visibility = 'hidden';
@@ -304,18 +304,16 @@ function render(rows, ind, period) {
     ch2.applyOptions({timeScale: {barSpacing: autoBarSpacing}});
     ch3.applyOptions({timeScale: {barSpacing: autoBarSpacing}});
     ch4.applyOptions({timeScale: {barSpacing: autoBarSpacing}});
+    // fixRightEdge锁定右边，fitContent会让最后1根在右边缘，显示范围自动限制
     ch1.timeScale().fitContent();
-    setTimeout(function() {
-      ch1.timeScale().scrollToRealTime();
-      ch2.timeScale().scrollToRealTime();
-      ch3.timeScale().scrollToRealTime();
-      ch4.timeScale().scrollToRealTime();
-      // scroll完成后显示图表
-      document.getElementById('p1').style.visibility = 'visible';
-      document.getElementById('p2').style.visibility = 'visible';
-      document.getElementById('p3').style.visibility = 'visible';
-      document.getElementById('p4').style.visibility = 'visible';
-    }, 500);
+    ch2.timeScale().fitContent();
+    ch3.timeScale().fitContent();
+    ch4.timeScale().fitContent();
+    // 立即显示图表
+    document.getElementById('p1').style.visibility = 'visible';
+    document.getElementById('p2').style.visibility = 'visible';
+    document.getElementById('p3').style.visibility = 'visible';
+    document.getElementById('p4').style.visibility = 'visible';
   }, 100);
 }
 
