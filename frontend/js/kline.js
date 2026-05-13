@@ -79,6 +79,8 @@ function buildSidebar(byStrat) {
   var totalCnt = 0;
 
   var order = ['补票','回头','填坑','大波','跳高','实力','xulilong'];
+  // DEBUG: 添加标记验证xulilong数据
+  console.log('[DEBUG] buildSidebar called, xulilong codes:', (byStrat['xulilong'] || []).length, 'raw:', JSON.stringify(byStrat['xulilong'] || []));
   order.forEach(function(strat) {
     var codes = byStrat[strat] || [];
     if (codes.length === 0) return;
