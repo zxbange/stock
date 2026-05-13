@@ -35,15 +35,16 @@ var _viewDate = null;
 
 var _alias = {
   '补票': '补票龙', '回头': '回头龙', '填坑': '填坑龙',
-  '大波': '大波龙', '跳高': '跳高龙', '实力': '实力龙'
+  '大波': '大波龙', '跳高': '跳高龙', '实力': '实力龙',
+  'xulilong': '蓄力龙'
 };
 var _icons = {
-  '补票':'📈','回头':'🔁','填坑':'🕳️','大波':'🌊','跳高':'🦘','实力':'💎'
+  '补票':'📈','回头':'🔁','填坑':'🕳️','大波':'🌊','跳高':'🦘','实力':'💎','xulilong':'⚡'
 };
 
 // 从 result_*.txt 动态构建侧边栏
 function loadSidebar() {
-  var strats = ['补票','回头','填坑','大波','跳高','实力'];
+  var strats = ['补票','回头','填坑','大波','跳高','实力','xulilong'];
   var loaded = 0, total = 0;
   var byStrat = {};
 
@@ -53,8 +54,8 @@ function loadSidebar() {
       return r.text();
     }).then(function(text) {
       var lines = text.trim().split('\n');
-      // 首行是战法名，跳过
-      var codes = lines.slice(1).filter(function(l) { return /^\d{6}\.(SZ|SH|BJ)$/.test(l.trim()); });
+      // 首行是战法名，跳过；提取股票代码（支持纯码或带备注的格式）
+      var codes = lines.slice(1).filter(function(l) { return /^\d{6}\.(SZ|SH|BJ)/.test(l.trim()); }).map(function(l) { return l.trim().substring(0, 9); });
       byStrat[strat] = codes;
       loaded++;
       if (loaded === strats.length) {
@@ -73,7 +74,7 @@ function buildSidebar(byStrat) {
   var html = '';
   var totalCnt = 0;
 
-  var order = ['补票','回头','填坑','大波','跳高','实力'];
+  var order = ['补票','回头','填坑','大波','跳高','实力','xulilong'];
   order.forEach(function(strat) {
     var codes = byStrat[strat] || [];
     if (codes.length === 0) return;
