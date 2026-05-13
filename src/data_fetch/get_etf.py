@@ -28,7 +28,7 @@ PROJECT_ROOT = Path(__file__).parent.parent.parent
 
 # ---------- 常量 ----------
 DATA_DIR = PROJECT_ROOT / "data/etf"
-BLACKLIST_FILE = PROJECT_ROOT / "etf_blacklist.txt"
+BLACKLIST_FILE = PROJECT_ROOT / "data/etf_blacklist.txt"
 MAX_WORKERS = 4
 
 def load_blacklist():

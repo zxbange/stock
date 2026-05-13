@@ -44,7 +44,7 @@ OUT_DIR        = os.path.join(TODAY_DIR, 'indicators')
 os.makedirs(OUT_DIR, exist_ok=True)
 
 # 加载黑名单
-BLACKLIST_FILE = PROJECT_ROOT / 'etf_blacklist.txt'
+BLACKLIST_FILE = PROJECT_ROOT / 'data/etf_blacklist.txt'
 _blacklist = set()
 if BLACKLIST_FILE.exists():
     with open(BLACKLIST_FILE, 'r', encoding='utf-8') as f:

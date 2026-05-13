@@ -14,7 +14,7 @@ IND_DIR  = Path('/home/bange/stock/daily_result/today/indicators_etf')
 OUT     = Path('/home/bange/stock/daily_result/today/etf_list.json')
 
 etf_list_path = DATA_DIR / 'etf_list.csv'
-BLACKLIST_FILE = PROJECT_ROOT / 'etf_blacklist.txt'
+BLACKLIST_FILE = PROJECT_ROOT / 'data/etf_blacklist.txt'
 
 def load_blacklist():
     """加载黑名单ETF列表"""
