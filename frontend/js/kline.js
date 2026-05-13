@@ -14,7 +14,7 @@ var _stockNames = {};
 
 // 加载股票中文名
 (function() {
-  fetch('/stock_names.json?v=210535').then(function(r) { return r.json(); })
+  fetch('/stock_names.json?v=210536').then(function(r) { return r.json(); })
   .then(function(names) {
     _stockNames = names;
   }).catch(function() {});
@@ -294,12 +294,16 @@ function render(rows, ind, period) {
   var COUNT = 200;
   var fromIdx = Math.max(0, N - COUNT);
   var toIdx = N - 1;
-  try {
-    ch1.timeScale().setVisibleRange({ from: rows[fromIdx].time, to: rows[toIdx].time });
-    ch2.timeScale().setVisibleRange({ from: rows[fromIdx].time, to: rows[toIdx].time });
-    ch3.timeScale().setVisibleRange({ from: rows[fromIdx].time, to: rows[toIdx].time });
-    ch4.timeScale().setVisibleRange({ from: rows[fromIdx].time, to: rows[toIdx].time });
-  } catch(e) { ch1.timeScale().fitContent(); }
+  // 延迟到下一帧执行，确保图表已完全初始化
+  setTimeout(function() {
+    try {
+      var range = { from: rows[fromIdx].time, to: rows[toIdx].time };
+      ch1.timeScale().setVisibleRange(range);
+      ch2.timeScale().setVisibleRange(range);
+      ch3.timeScale().setVisibleRange(range);
+      ch4.timeScale().setVisibleRange(range);
+    } catch(e) { ch1.timeScale().fitContent(); }
+  }, 0);
 }
 
 function selectStock(el, code) {
