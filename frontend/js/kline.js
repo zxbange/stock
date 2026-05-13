@@ -290,11 +290,11 @@ function render(rows, ind, period) {
     setInfo('info4', '<div>K:<span style="color:#ffea00">' + f2(ind.K[N-1]) + '</span> D:<span style="color:#ff9800">' + f2(ind.D[N-1]) + '</span> J:<span style="color:#e040fb">' + f2(ind.J ? ind.J[N-1] : null) + '</span></div>');
   }
 
-  // 默认显示最新200根蜡烛，barSpacing让200根+5根右边距填满容器，fixRightEdge锁定右边
-  var COUNT = 200, MARGIN = 5, TOTAL = COUNT + MARGIN;
+  // 默认显示最新200根蜡烛，barSpacing让200根填满容器，setVisibleLogicalRange限制范围
+  var COUNT = 200;
   var w = document.getElementById('p1').clientWidth || 800;
-  var autoBarSpacing = Math.max(3, w / TOTAL);
-  // 先隐藏图表防止闪烁，等设置完成后再显示
+  var autoBarSpacing = Math.max(3, w / (COUNT + 1));
+  // 先隐藏图表防止闪烁
   document.getElementById('p1').style.visibility = 'hidden';
   document.getElementById('p2').style.visibility = 'hidden';
   document.getElementById('p3').style.visibility = 'hidden';
@@ -304,11 +304,12 @@ function render(rows, ind, period) {
     ch2.applyOptions({timeScale: {barSpacing: autoBarSpacing}});
     ch3.applyOptions({timeScale: {barSpacing: autoBarSpacing}});
     ch4.applyOptions({timeScale: {barSpacing: autoBarSpacing}});
-    // fixRightEdge锁定右边，fitContent会让最后1根在右边缘，显示范围自动限制
-    ch1.timeScale().fitContent();
-    ch2.timeScale().fitContent();
-    ch3.timeScale().fitContent();
-    ch4.timeScale().fitContent();
+    // 用logical range直接限制显示范围到最后200根
+    var fromIdx = Math.max(0, N - COUNT);
+    ch1.timeScale().setVisibleLogicalRange({from: fromIdx, to: N - 1});
+    ch2.timeScale().setVisibleLogicalRange({from: fromIdx, to: N - 1});
+    ch3.timeScale().setVisibleLogicalRange({from: fromIdx, to: N - 1});
+    ch4.timeScale().setVisibleLogicalRange({from: fromIdx, to: N - 1});
     // 立即显示图表
     document.getElementById('p1').style.visibility = 'visible';
     document.getElementById('p2').style.visibility = 'visible';
