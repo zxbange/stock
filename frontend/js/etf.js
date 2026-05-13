@@ -43,46 +43,42 @@ function buildSidebarETF(benchData, searchText) {
   var html = '';
   var totalCnt = 0;
 
-  var benches = Object.keys(benchData).sort(function(a, b) {
-    var sumA = benchData[a].reduce(function(s, x) { return s + x.amount; }, 0);
-    var sumB = benchData[b].reduce(function(s, x) { return s + x.amount; }, 0);
-    return sumB - sumA;
-  });
-
-  benches.forEach(function(bench) {
-    var list = benchData[bench];
-    if (list.length === 0) return;
-
-    // 搜索模式下：过滤出匹配项；非搜索模式：正常显示全量
-    var filteredList = list;
-    if (search) {
-      filteredList = list.filter(function(etf) {
-        return etf.ts_code.toLowerCase().includes(search) || etf.name.toLowerCase().includes(search);
-      });
-    }
-    if (filteredList.length === 0) return;
-
-    totalCnt += filteredList.length;
-    var shortBench = bench.length > 55 ? bench.slice(0, 55) + '…' : bench;
-    html += '<div class="group">';
-    html += '<div class="ghdr" onclick="toggleGroup(this)"><span class="gname">' + shortBench + '</span><span class="gcnt">' + filteredList.length + '</span></div>';
-    html += '<div class="stocks">';
-    filteredList.forEach(function(etf) {
-      html += '<div class="stk" data-code="' + etf.ts_code + '" onclick="selectStock(this,\'' + etf.ts_code + '\')"><div class="sname">' + etf.name + '</div><div class="scode">' + etf.ts_code + '</div></div>';
+  // 收集所有ETF并按成交额排序
+  var allEtfs = [];
+  Object.keys(benchData).forEach(function(bench) {
+    benchData[bench].forEach(function(etf) {
+      allEtfs.push(etf);
     });
-    html += '</div></div>';
   });
+  allEtfs.sort(function(a, b) { return b.amount - a.amount; });
+
+  // 搜索过滤
+  var filtered = allEtfs;
+  if (search) {
+    filtered = allEtfs.filter(function(etf) {
+      return etf.ts_code.toLowerCase().includes(search) || etf.name.toLowerCase().includes(search);
+    });
+  }
+
+  if (filtered.length === 0) {
+    document.getElementById('sidebarTitle').innerHTML = 'ETF精选<br><span style="font-size:10px;color:#666">0只</span>';
+    document.getElementById('sidebarContent').innerHTML = '<div style="padding:12px;color:#888;text-align:center">无匹配结果</div>';
+    return;
+  }
+
+  totalCnt = filtered.length;
+  html += '<div class="group"><div class="stocks">';
+  filtered.forEach(function(etf) {
+    html += '<div class="stk" data-code="' + etf.ts_code + '" onclick="selectStock(this,\'' + etf.ts_code + '\')"><div class="sname">' + etf.name + '</div><div class="scode">' + etf.ts_code + '</div></div>';
+  });
+  html += '</div></div>';
 
   var label = search ? 'ETF精选<span style="font-size:10px;color:#888"> · 搜索:"' + search + '" · ' + totalCnt + '只</span>' : 'ETF精选<br><span style="font-size:10px;color:#666">' + totalCnt + '只</span>';
   document.getElementById('sidebarTitle').innerHTML = label;
-  document.getElementById('sidebarContent').innerHTML = html || '<div style="padding:12px;color:#888;text-align:center">无匹配结果</div>';
+  document.getElementById('sidebarContent').innerHTML = html;
 
-  if (!search) {
-    var firstGroup = document.querySelector('.stocks');
-    if (firstGroup) firstGroup.classList.add('open');
-    var firstStk = document.querySelector('.stk');
-    if (firstStk) selectStock(firstStk, firstStk.dataset.code);
-  }
+  var firstStk = document.querySelector('.stk');
+  if (firstStk) selectStock(firstStk, firstStk.dataset.code);
 }
 
 // ─── 图表创建 ───────────────────────────────────────────────────────────────
