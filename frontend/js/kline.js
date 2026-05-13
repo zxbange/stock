@@ -14,7 +14,7 @@ var _stockNames = {};
 
 // 加载股票中文名
 (function() {
-  fetch('/stock_names.json?v=210531').then(function(r) { return r.json(); })
+  fetch('/stock_names.json?v=210533').then(function(r) { return r.json(); })
   .then(function(names) {
     _stockNames = names;
   }).catch(function() {});
