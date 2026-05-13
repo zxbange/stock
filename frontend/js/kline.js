@@ -34,16 +34,16 @@ var _viewDate = null;
 })();
 
 var _alias = {
-  '补票': '补票龙', 'TePu': '回头龙', '填坑': '填坑龙',
-  '大波浪': '大波龙', '红悬停': '跳高龙', '高业绩': '实力龙'
+  '补票': '补票龙', '回头': '回头龙', '填坑': '填坑龙',
+  '大波': '大波龙', '跳高': '跳高龙', '实力': '实力龙'
 };
 var _icons = {
-  '补票':'📈','TePu':'🔁','填坑':'🕳️','大波浪':'🌊','红悬停':'🦘','高业绩':'💎'
+  '补票':'📈','回头':'🔁','填坑':'🕳️','大波':'🌊','跳高':'🦘','实力':'💎'
 };
 
 // 从 result_*.txt 动态构建侧边栏
 function loadSidebar() {
-  var strats = ['补票','TePu','填坑','大波浪','红悬停','高业绩'];
+  var strats = ['补票','回头','填坑','大波','跳高','实力'];
   var loaded = 0, total = 0;
   var byStrat = {};
 
@@ -73,7 +73,7 @@ function buildSidebar(byStrat) {
   var html = '';
   var totalCnt = 0;
 
-  var order = ['补票','TePu','填坑','大波浪','红悬停','高业绩'];
+  var order = ['补票','回头','填坑','大波','跳高','实力'];
   order.forEach(function(strat) {
     var codes = byStrat[strat] || [];
     if (codes.length === 0) return;
