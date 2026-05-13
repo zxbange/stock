@@ -67,7 +67,7 @@ function buildSidebarETF(benchData, searchText) {
   }
 
   totalCnt = filtered.length;
-  html += '<div class="group"><div class="stocks">';
+  html += '<div class="group"><div class="stocks open">';
   filtered.forEach(function(etf) {
     html += '<div class="stk" data-code="' + etf.ts_code + '" onclick="selectStock(this,\'' + etf.ts_code + '\')"><div class="sname">' + etf.name + '</div><div class="scode">' + etf.ts_code + '</div></div>';
   });
