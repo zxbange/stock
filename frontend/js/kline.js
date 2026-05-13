@@ -113,7 +113,7 @@ function createCharts() {
     layout: { background: { color: '#111122' }, textColor: '#888' },
     grid: { vertLines: { color: '#1e1e2e' }, horzLines: { color: '#1e1e2e' } },
     rightPriceScale: { borderVisible: false, visible: false },
-    timeScale: { borderVisible: false, timeVisible: true, rightOffset: 0 },
+    timeScale: { borderVisible: false, timeVisible: true, rightOffset: 10 },
     crosshair: { mode: LightweightCharts.CrosshairMode.Normal }
   });
   cd1 = ch1.addCandlestickSeries({
@@ -290,13 +290,12 @@ function render(rows, ind, period) {
     setInfo('info4', '<div>K:<span style="color:#ffea00">' + f2(ind.K[N-1]) + '</span> D:<span style="color:#ff9800">' + f2(ind.D[N-1]) + '</span> J:<span style="color:#e040fb">' + f2(ind.J ? ind.J[N-1] : null) + '</span></div>');
   }
 
-  // 默认显示最新200根蜡烛，右边距10px
-  // 策略：barSpacing让200根蜡烛占满宽度(w-10)，然后滚动到最后200根位置
+  // 默认显示最新200根蜡烛，右边留10px空距
+  // scrollToRealTime让最后1根在右边缘(受rightOffset影响)，但会显示全部蜡烛
+  // 所以先用scrollToRealTime定位，再用scrollToPosition(N-200)向左滚动
   var COUNT = 200;
   var w = document.getElementById('p1').clientWidth || 800;
-  var gapPx = 10;
-  // barSpacing让200根蜡烛占满 w-10 的宽度，最后1根在右边缘但有10px空距
-  var autoBarSpacing = Math.max(2, (w - gapPx) / COUNT);
+  var autoBarSpacing = Math.max(3, w / (COUNT + 2));
   // 先隐藏图表防止闪烁
   document.getElementById('p1').style.visibility = 'hidden';
   document.getElementById('p2').style.visibility = 'hidden';
@@ -309,17 +308,18 @@ function render(rows, ind, period) {
     ch4.applyOptions({timeScale: {barSpacing: autoBarSpacing}});
     ch1.timeScale().fitContent();
     setTimeout(function() {
-      // scrollToRealTime先定位到最右边(rightOffset影响空距)
+      // scrollToRealTime让最后1根定位到右边缘(rightOffset空出10px)
       ch1.timeScale().scrollToRealTime();
       ch2.timeScale().scrollToRealTime();
       ch3.timeScale().scrollToRealTime();
       ch4.timeScale().scrollToRealTime();
-      // 再向左滚动scrollPosition - (N - COUNT)，显示最后200根
-      var scrollBack = N - COUNT;
-      ch1.timeScale().scrollToPosition(scrollBack, true);
-      ch2.timeScale().scrollToPosition(scrollBack, true);
-      ch3.timeScale().scrollToPosition(scrollBack, true);
-      ch4.timeScale().scrollToPosition(scrollBack, true);
+      // 再向左滚动N-200根，让200根蜡烛显示在可见区域
+      var scrollBy = N - COUNT;
+      var sp = ch1.timeScale().scrollPosition();
+      ch1.timeScale().scrollToPosition(sp - scrollBy, true);
+      ch2.timeScale().scrollToPosition(sp - scrollBy, true);
+      ch3.timeScale().scrollToPosition(sp - scrollBy, true);
+      ch4.timeScale().scrollToPosition(sp - scrollBy, true);
       // 显示图表
       document.getElementById('p1').style.visibility = 'visible';
       document.getElementById('p2').style.visibility = 'visible';
