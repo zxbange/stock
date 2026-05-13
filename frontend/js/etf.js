@@ -359,7 +359,7 @@ function navigateStock(dir) {
   var cur = document.querySelector('.stk.active');
   if (!cur) return;
   var next = all[Array.from(all).indexOf(cur) + dir];
-  if (next) { next.click(); next.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+  if (next) { next.click(); }
 }
 function toggleSidebar() {
   var sb = document.querySelector('.sidebar');

@@ -364,7 +364,7 @@ function navigateStock(dir) {
   var idx = items.indexOf(active);
   var newIdx = (idx + dir + items.length) % items.length;
   var next = items[newIdx];
-  if (next) { next.click(); next.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+  if (next) { next.click(); }
 }
 
 function toggleSidebar() {
