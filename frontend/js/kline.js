@@ -290,20 +290,16 @@ function render(rows, ind, period) {
     setInfo('info4', '<div>K:<span style="color:#ffea00">' + f2(ind.K[N-1]) + '</span> D:<span style="color:#ff9800">' + f2(ind.D[N-1]) + '</span> J:<span style="color:#e040fb">' + f2(ind.J ? ind.J[N-1] : null) + '</span></div>');
   }
 
-  // 默认显示最新200根蜡烛，左边留5根空位作右边距效果
-  var COUNT = 200;
-  var fromIdx = Math.max(0, N - COUNT);
-  var toIdx = N - 1;
-  // 延迟到下一帧执行，确保图表已完全初始化
+  // 默认显示全部蜡烛，scrollToRealTime()将最后1根定位到右边缘，rightOffset=5留出右边距
   setTimeout(function() {
-    try {
-      var range = { from: rows[fromIdx].time, to: rows[toIdx].time };
-      ch1.timeScale().setVisibleRange(range);
-      ch2.timeScale().setVisibleRange(range);
-      ch3.timeScale().setVisibleRange(range);
-      ch4.timeScale().setVisibleRange(range);
-    } catch(e) { ch1.timeScale().fitContent(); }
-  }, 0);
+    ch1.timeScale().fitContent();
+    setTimeout(function() {
+      ch1.timeScale().scrollToRealTime();
+      ch2.timeScale().scrollToRealTime();
+      ch3.timeScale().scrollToRealTime();
+      ch4.timeScale().scrollToRealTime();
+    }, 500);
+  }, 100);
 }
 
 function selectStock(el, code) {
