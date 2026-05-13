@@ -113,7 +113,7 @@ function createCharts() {
     layout: { background: { color: '#111122' }, textColor: '#888' },
     grid: { vertLines: { color: '#1e1e2e' }, horzLines: { color: '#1e1e2e' } },
     rightPriceScale: { borderVisible: false, visible: false },
-    timeScale: { borderVisible: false, timeVisible: true, rightOffset: 5, fixLeftEdge: false, fixRightEdge: true },
+    timeScale: { borderVisible: false, timeVisible: true, rightOffset: 10 },
     crosshair: { mode: LightweightCharts.CrosshairMode.Normal }
   });
   cd1 = ch1.addCandlestickSeries({
