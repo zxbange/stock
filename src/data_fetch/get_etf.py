@@ -67,8 +67,8 @@ def get_etf_list_tushare() -> pd.DataFrame:
         fields="ts_code,name,benchmark,found_date",
     )
     df["found_date"] = df["found_date"].astype(str)
-    # 保留START_DATE之前成立的ETF
-    df = df[df["found_date"] <= START_DATE].copy()
+    # 下载全部ETF，不限制成立时间
+    df = df.copy()
     logger.info("Tushare ETF列表（含LOF）: %d 只", len(df))
     return df
 
