@@ -294,6 +294,11 @@ function render(rows, ind, period) {
   var COUNT = 200, MARGIN = 5, TOTAL = COUNT + MARGIN;
   var w = document.getElementById('p1').clientWidth || 800;
   var autoBarSpacing = Math.max(3, w / TOTAL);
+  // 先隐藏图表防止闪烁，等scroll完成后再显示
+  document.getElementById('p1').style.visibility = 'hidden';
+  document.getElementById('p2').style.visibility = 'hidden';
+  document.getElementById('p3').style.visibility = 'hidden';
+  document.getElementById('p4').style.visibility = 'hidden';
   setTimeout(function() {
     ch1.applyOptions({timeScale: {barSpacing: autoBarSpacing}});
     ch2.applyOptions({timeScale: {barSpacing: autoBarSpacing}});
@@ -305,6 +310,11 @@ function render(rows, ind, period) {
       ch2.timeScale().scrollToRealTime();
       ch3.timeScale().scrollToRealTime();
       ch4.timeScale().scrollToRealTime();
+      // scroll完成后显示图表
+      document.getElementById('p1').style.visibility = 'visible';
+      document.getElementById('p2').style.visibility = 'visible';
+      document.getElementById('p3').style.visibility = 'visible';
+      document.getElementById('p4').style.visibility = 'visible';
     }, 500);
   }, 100);
 }
