@@ -113,7 +113,7 @@ function createCharts() {
     layout: { background: { color: '#111122' }, textColor: '#888' },
     grid: { vertLines: { color: '#1e1e2e' }, horzLines: { color: '#1e1e2e' } },
     rightPriceScale: { borderVisible: false, visible: false },
-    timeScale: { borderVisible: false, timeVisible: true, rightOffset: 10 },
+    timeScale: { borderVisible: false, timeVisible: true, rightOffset: 0 },
     crosshair: { mode: LightweightCharts.CrosshairMode.Normal }
   });
   cd1 = ch1.addCandlestickSeries({
@@ -290,16 +290,23 @@ function render(rows, ind, period) {
     setInfo('info4', '<div>K:<span style="color:#ffea00">' + f2(ind.K[N-1]) + '</span> D:<span style="color:#ff9800">' + f2(ind.D[N-1]) + '</span> J:<span style="color:#e040fb">' + f2(ind.J ? ind.J[N-1] : null) + '</span></div>');
   }
 
-  // 默认显示最新200根蜡烛，barSpacing让200根填满容器，setVisibleLogicalRange限制范围
+  // 默认显示最新200根蜡烛，右边留10px空距
+  // 通过缩小容器宽度10px实现右边距效果
   var COUNT = 200;
   var w = document.getElementById('p1').clientWidth || 800;
-  var autoBarSpacing = Math.max(3, w / (COUNT + 1));
+  var gapPx = 10;
+  var autoBarSpacing = Math.max(3, (w - gapPx) / (COUNT + 1));
   // 先隐藏图表防止闪烁
   document.getElementById('p1').style.visibility = 'hidden';
   document.getElementById('p2').style.visibility = 'hidden';
   document.getElementById('p3').style.visibility = 'hidden';
   document.getElementById('p4').style.visibility = 'hidden';
   setTimeout(function() {
+    // 缩小容器宽度实现右边10px空距
+    document.getElementById('p1').style.width = (w - gapPx) + 'px';
+    document.getElementById('p2').style.width = (w - gapPx) + 'px';
+    document.getElementById('p3').style.width = (w - gapPx) + 'px';
+    document.getElementById('p4').style.width = (w - gapPx) + 'px';
     ch1.applyOptions({timeScale: {barSpacing: autoBarSpacing}});
     ch2.applyOptions({timeScale: {barSpacing: autoBarSpacing}});
     ch3.applyOptions({timeScale: {barSpacing: autoBarSpacing}});
