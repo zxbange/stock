@@ -10,8 +10,8 @@ logger = get_logger("生成ETF列表")
 import json, csv, pandas as pd
 
 DATA_DIR = PROJECT_ROOT / 'data/etf'
-IND_DIR  = Path('/home/bange/stock/daily_result/today/indicators_etf')
-OUT     = Path('/home/bange/stock/daily_result/today/etf_list.json')
+IND_DIR  = PROJECT_ROOT / 'daily_result/today/indicators_etf'
+OUT     = PROJECT_ROOT / 'daily_result/today/etf_list.json'
 
 etf_list_path = DATA_DIR / 'etf_list.csv'
 BLACKLIST_FILE = PROJECT_ROOT / 'data/etf_blacklist.txt'
@@ -29,7 +29,7 @@ def load_blacklist():
 
 blacklist = load_blacklist()
 if blacklist:
-    print(f"黑名单: {len(blacklist)} 只，将被过滤")
+    logger.info("黑名单: %d 只，将被过滤", len(blacklist))
 
 def get_latest_amount(ts_code: str) -> float:
     """从各ETF的CSV读取最新交易日的amount（用于排序）"""
@@ -42,7 +42,8 @@ def get_latest_amount(ts_code: str) -> float:
             return 0.0
         latest = df.sort_values('date').iloc[-1]
         return float(latest['amount']) if not pd.isna(latest['amount']) else 0.0
-    except Exception:
+    except Exception as e:
+        logger.warning("读取 %s 金额失败: %s", ts_code, e)
         return 0.0
 
 # 按benchmark分组
@@ -52,10 +53,8 @@ with open(etf_list_path) as f:
         ts_code = row['ts_code'].strip()
         name    = row['name'].strip()
         bench   = row.get('benchmark', '') or '未知指数'
-        # 跳过黑名单ETF
         if blacklist and ts_code in blacklist:
             continue
-        # 只包含有indicators的ETF
         if not (IND_DIR / f'{ts_code}.json').exists():
             continue
         amount = get_latest_amount(ts_code)
@@ -71,8 +70,8 @@ for bench in bench_data:
     bench_data[bench].sort(key=lambda x: -x['amount'])
 
 total = sum(len(v) for v in bench_data.values())
-print(f"ETF分组: {len(bench_data)}, 有indicators: {total}")
+logger.info("ETF分组: %d, 有indicators: %d", len(bench_data), total)
 
 with open(OUT, 'w', encoding='utf-8') as f:
     json.dump(bench_data, f, ensure_ascii=False)
-print(f"已写入: {OUT}")
+logger.info("已写入: %s", OUT)

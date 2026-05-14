@@ -23,4 +23,4 @@ out = DR / 'dates.json'
 with open(out, 'w', encoding='utf-8') as f:
     json.dump(dates, f, ensure_ascii=False)
 
-print(f'dates.json: {len(dates)} 天历史目录 → {out}')
+logger.info('dates.json: %d 天历史目录 → %s', len(dates), out)

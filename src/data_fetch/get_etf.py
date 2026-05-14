@@ -24,6 +24,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.log_config import get_logger
 logger = get_logger("下载ETF数据")
 
+from utils.retry_util import retry_call
+
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 
 # ---------- 常量 ----------

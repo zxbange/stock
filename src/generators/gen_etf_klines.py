@@ -1,22 +1,21 @@
 #!/usr/bin/env python3
-import sys
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.log_config import get_logger
-logger = get_logger("生成ETF_K线图")
 """
 ETF K线图批量生成器 - 从 data/etf/*.csv 读取本地数据
 纯本地计算，不走API，多进程并行
 """
-import os, sys, time, shutil, glob
+import os, sys, time, glob
 from pathlib import Path
 from multiprocessing import Pool, cpu_count
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+from utils.log_config import get_logger
+logger = get_logger("生成ETF_K线图")
+
 ETF_DATA_DIR = PROJECT_ROOT / "data/etf"
 KLINE_OUT_DIR = ETF_DATA_DIR / "kline"
 KLINE_OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-COLS = ["date", "pre_close", "open", "high", "low", "close", "volume"]
 
 def generate_etf_chart(code, periods=450):
     """生成单只ETF的K线图"""
@@ -36,7 +35,6 @@ def generate_etf_chart(code, periods=450):
         if df.empty or len(df) < 10:
             return code, "no_data"
 
-        # 统一列名
         df = df.rename(columns={"ts_code": "code", "amount": "turnover"})
         df["date"] = pd.to_datetime(df["date"])
         df = df.sort_values("date").reset_index(drop=True)
@@ -46,7 +44,6 @@ def generate_etf_chart(code, periods=450):
         high_full  = df["high"].values
         low_full   = df["low"].values
 
-        # 均线（全量计算后截取）
         ma_data = {}
         for period, color, label in [
             (5,"yellow","MA5"),(10,"orange","MA10"),(20,"cyan","MA20"),
@@ -64,14 +61,12 @@ def generate_etf_chart(code, periods=450):
         for p in list(ma_data.keys()):
             ma_data[p] = ma_data[p][-periods:]
 
-        # MACD
         ema12 = pd.Series(close).ewm(span=12).mean().values
         ema26 = pd.Series(close).ewm(span=26).mean().values
         dif   = ema12 - ema26
         dea   = pd.Series(dif).ewm(span=9).mean().values
         macd  = 2 * (dif - dea)
 
-        # KDJ
         n = 9
         low_n  = pd.Series(low).rolling(n).min().values
         high_n = pd.Series(high).rolling(n).max().values
@@ -180,20 +175,20 @@ def generate_etf_chart(code, periods=450):
 def main():
     csv_files = glob.glob(str(ETF_DATA_DIR / "*.csv"))
     codes = [os.path.basename(f).replace(".csv", "") for f in csv_files]
-    print(f"待生成: {len(codes)} 只 ETF")
+    logger.info("待生成: %d 只 ETF", len(codes))
 
     already = len(list(KLINE_OUT_DIR.glob("kline_*.png")))
-    print(f"已存在: {already} 张，跳过")
+    logger.info("已存在: %d 张，跳过", already)
 
     todo = [c for c in codes if not (KLINE_OUT_DIR / f"kline_{c}.png").exists()]
-    print(f"本次需生成: {len(todo)} 张")
+    logger.info("本次需生成: %d 张", len(todo))
 
     if not todo:
-        print("全部完成")
+        logger.info("全部完成")
         return
 
     workers = min(cpu_count(), 8)
-    print(f"使用 {workers} 进程并行...")
+    logger.info("使用 %d 进程并行...", workers)
 
     t0 = time.time()
     ok = skip = err = 0
@@ -210,11 +205,12 @@ def main():
                 elapsed = time.time() - t0
                 rate = done / elapsed if elapsed > 0 else 0
                 remaining = (len(todo) - done) / rate if rate > 0 else 0
-                print(f"进度: {done}/{len(todo)}  成功:{ok}  跳过:{skip}  失败:{err}  预计剩余:{remaining:.0f}秒")
+                logger.info("进度: %d/%d  成功:%d  跳过:%d  失败:%d  预计剩余:%.0f秒",
+                           done, len(todo), ok, skip, err, remaining)
 
     total_time = time.time() - t0
-    print(f"\n完成！共 {ok} 张，耗时 {total_time:.0f} 秒")
-    print(f"图片目录: {KLINE_OUT_DIR}")
+    logger.info("完成！共 %d 张，耗时 %.0f 秒", ok, total_time)
+    logger.info("图片目录: %s", KLINE_OUT_DIR)
 
 
 if __name__ == "__main__":

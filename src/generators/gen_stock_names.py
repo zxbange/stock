@@ -15,4 +15,4 @@ names = dict(zip(df['ts_code'], df['name']))
 out_path = PROJECT_ROOT / 'frontend' / 'stock_names.json'
 with open(out_path, 'w', encoding='utf-8') as f:
     json.dump(names, f, ensure_ascii=False)
-print(f'更新了 {len(names)} 只股票的中文名')
+logger.info('更新了 %d 只股票的中文名', len(names))

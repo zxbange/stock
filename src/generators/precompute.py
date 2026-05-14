@@ -15,31 +15,16 @@
 """
 import os, json, sys, glob, argparse, concurrent.futures, re
 from pathlib import Path
-from pathlib import Path
 import pandas as pd
-import tushare as ts
-import time
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
-BASE = PROJECT_ROOT
 from utils.log_config import get_logger
 logger = get_logger("预计算指标")
 
-
-def get_api():
-    token = ts.get_token()
-    pro = ts.pro_api(token)
-    return pro
-
-
-def rate_call(func, *args, **kwargs):
-    """带速率限制的API调用（precompute阶段，低频可复用）"""
-    return func(*args, **kwargs)  # 直接调，无严格限速
-
 DATA_DIR_STOCK = str(PROJECT_ROOT / 'data/kline')
 DATA_DIR_ETF   = str(PROJECT_ROOT / 'data/etf')
-TODAY_DIR      = '/home/bange/stock/daily_result/today'
+TODAY_DIR      = str(PROJECT_ROOT / 'daily_result/today')
 OUT_DIR        = os.path.join(TODAY_DIR, 'indicators')
 os.makedirs(OUT_DIR, exist_ok=True)
 
@@ -53,7 +38,7 @@ if BLACKLIST_FILE.exists():
             if code:
                 _blacklist.add(code)
 if _blacklist:
-    print(f"黑名单ETF: {len(_blacklist)} 只，预计算将跳过")
+    logger.info("黑名单ETF: %d 只，预计算将跳过", len(_blacklist))
 
 # ─── 共用指标计算 ───────────────────────────────────────────────────────────
 
@@ -127,21 +112,18 @@ def load_csv_etf(code):
     if not os.path.exists(path):
         return []
 
-    # 读取CSV（adj_factor在最后一列col 11）
     rows_raw = []
     with open(path) as f:
-        next(f)  # header
+        next(f)
         for line in f:
             c = line.strip().split(',')
             if len(c) < 11:
                 continue
             d = c[1]
-            # d 可能是 YYYYMMDD 或 YYYY-MM-DD
             if '-' in d:
-                date_fmt = d  # 已经是YYYY-MM-DD格式
+                date_fmt = d
             else:
                 date_fmt = f"{d[:4]}-{d[4:6]}-{d[6:8]}"
-            # adj_factor在col 12（索引11），无/空/NaN则用latest_factor替代，保证K线连续
             raw_factor_str = c[11].strip() if len(c) > 11 else ''
             factor = float(raw_factor_str) if raw_factor_str else None
             rows_raw.append({
@@ -157,8 +139,6 @@ def load_csv_etf(code):
     if not rows_raw:
         return []
 
-    # 最新因子 = 最新日期（距今最近）对应的因子，不是max(factor)
-    # 原因：因子大小≠日期远近，部分基金拆分导致历史因子反而大于最新因子
     latest_row = max(rows_raw, key=lambda r: r['time'])
     latest_factor = latest_row['factor']
     if latest_factor is None or latest_factor == 0:
@@ -169,7 +149,6 @@ def load_csv_etf(code):
         f = r['factor'] if r['factor'] is not None else latest_factor
         rows.append({
             'time': r['time'],
-            # 前复权: raw × factor ÷ latest_factor（factor=None时用latest_factor，相当于不做调整）
             'o': round(r['o'] * f / latest_factor, 4),
             'h': round(r['h'] * f / latest_factor, 4),
             'l': round(r['l'] * f / latest_factor, 4),
@@ -177,30 +156,6 @@ def load_csv_etf(code):
             'v': r['v'],
         })
     return rows
-
-def aggregate(rows, freq):
-    df = pd.DataFrame(rows)
-    df['time'] = pd.to_datetime(df['time'])
-    df = df.set_index('time').sort_index()
-    grp_freq = 'W-FRI' if freq == 'W' else 'ME'
-    grp = df.groupby(pd.Grouper(freq=grp_freq))
-    agg_rows = []
-    for (_, sub) in grp:
-        if len(sub) == 0:
-            continue
-        sub = sub.sort_values('time')
-        open_px  = float(sub.iloc[0]['o'])
-        close_px = float(sub.iloc[-1]['c'])
-        agg_rows.append({
-            'time': str(_)[:10],
-            'o':    open_px,
-            'h':    float(sub['h'].max()),
-            'l':    float(sub['l'].min()),
-            'c':    close_px,
-            'v':    float(sub['v'].sum()),
-            'pct':  float((close_px - open_px) / open_px * 100) if open_px != 0 else 0,
-        })
-    return agg_rows
 
 # ─── 预计算任务 ─────────────────────────────────────────────────────────────
 
@@ -216,7 +171,7 @@ def task_daily(code, loader):
             json.dump(out, f)
         return True
     except Exception as e:
-        print(f'ERROR daily {code}: {e}', flush=True)
+        logger.error('预计算 %s 日线失败: %s', code, e)
         return False
 
 def task_weekly_monthly(code, loader):
@@ -224,7 +179,6 @@ def task_weekly_monthly(code, loader):
         rows = loader(code)
         if len(rows) < 60:
             return False
-        # 周K：freq='W-FRI' 周五结，算是A股官方编制
         for freq, grp_freq in [('W','W-FRI'), ('M','ME')]:
             df_tmp = pd.DataFrame(rows)
             df_tmp['time'] = pd.to_datetime(df_tmp['time'])
@@ -261,7 +215,7 @@ def task_weekly_monthly(code, loader):
                 json.dump(out, f, ensure_ascii=False)
         return True
     except Exception as e:
-        print(f'ERROR wm {code}: {e}', flush=True)
+        logger.error('预计算 %s 周/月线失败: %s', code, e)
         return False
 
 def collect_selected_codes():
@@ -271,7 +225,6 @@ def collect_selected_codes():
         with open(f) as fp:
             for line in fp:
                 line = line.strip()
-                # 支持纯码格式(000063.SZ)和带备注格式(601138.SH 2026-05-13 ...)
                 m = re.match(r'^(\d{6}\.(?:SZ|SH|BJ))', line)
                 if m:
                     codes.add(m.group(1))
@@ -280,23 +233,19 @@ def collect_selected_codes():
 def run(source, mode, codes=None):
     global OUT_DIR
     OUT_DIR = os.path.join(TODAY_DIR, 'indicators_etf' if source == 'etf' else 'indicators')
-    os.makedirs(OUT_DIR, exist_ok=True)  # 确保输出目录存在
+    os.makedirs(OUT_DIR, exist_ok=True)
     if codes is None:
-        # 全量模式：从目录加载所有CSV
         if source == 'stock':
             data_dir = DATA_DIR_STOCK
-            loader = load_csv_stock
         else:
             data_dir = DATA_DIR_ETF
-            loader = load_csv_etf
         files = glob.glob(os.path.join(data_dir, '*.csv'))
         codes = [os.path.basename(f).replace('.csv', '') for f in files]
-        # 过滤黑名单ETF
         if source == 'etf' and _blacklist:
             codes = [c for c in codes if c not in _blacklist]
         codes.sort()
 
-    print(f'[{source}] 预计算 {len(codes)} 个，输出到 {OUT_DIR}')
+    logger.info('[%s] 预计算 %d 个，输出到 %s', source, len(codes), OUT_DIR)
 
     if source == 'stock':
         loader = load_csv_stock
@@ -311,7 +260,7 @@ def run(source, mode, codes=None):
                 if fut.result():
                     done += 1
                 if done % 50 == 0 and done > 0:
-                    print(f'已完成 {done}/{len(codes)}', flush=True)
+                    logger.info('已完成 %d/%d', done, len(codes))
 
         if mode in ('weekly', 'all'):
             futs = {ex.submit(task_weekly_monthly, code, loader): code for code in codes}
@@ -319,9 +268,9 @@ def run(source, mode, codes=None):
                 if fut.result():
                     done += 1
                 if done % 50 == 0 and done > 0:
-                    print(f'已完成 {done}/{len(codes)}', flush=True)
+                    logger.info('已完成 %d/%d', done, len(codes))
 
-    print(f'[{source}] 完成！')
+    logger.info('[%s] 完成！', source)
 
 # ─── 入口 ───────────────────────────────────────────────────────────────────
 
@@ -337,10 +286,9 @@ if __name__ == '__main__':
 
     if args.from_results:
         codes = collect_selected_codes()
-        print(f'从选股结果读取到 {len(codes)} 个股票代码')
+        logger.info('从选股结果读取到 %d 个股票代码', len(codes))
         run('stock', args.mode, codes=codes)
         if args.etf:
-            # ETF暂时还是全量（ETF没有战法筛选）
             run('etf', args.mode)
     else:
         if args.source in ('stock', 'all'):

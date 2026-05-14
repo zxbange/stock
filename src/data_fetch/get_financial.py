@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.log_config import get_logger
 logger = get_logger("下载财务数据")
 
-
+from utils.retry_util import retry_call
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data/financial"
@@ -78,18 +78,17 @@ def get_all_codes() -> list:
 def fetch_stock(code: str, api, all_periods: list) -> bool:
     all_data = []
     for period in all_periods:
-        try:
-            df = rate_call(
-                api.income,
-                ts_code=code,
-                period=period,
-                fields='ts_code,ann_date,period,end_date,n_income,basic_eps'
-            )
-            if df is not None and not df.empty:
-                df = df.drop_duplicates(subset=['end_date'], keep='first')
-                all_data.append(df)
-        except Exception:
-            pass
+        _, err = retry_call(api.income, ts_code=code, period=period,
+                            fields='ts_code,ann_date,period,end_date,n_income,basic_eps',
+                            retries=3, base_delay=0.5, max_delay=10,
+                            logger_name="下载财务数据")
+        df = _
+        if err:
+            logger.debug("fetch %s period %s failed: %s", code, period, err)
+            continue
+        if df is not None and not df.empty:
+            df = df.drop_duplicates(subset=['end_date'], keep='first')
+            all_data.append(df)
 
     if not all_data:
         return False

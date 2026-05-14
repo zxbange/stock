@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-跳高选股分析脚本
+跳高选股分析脚本（红悬停）
 
 选股逻辑：
 1. T-2日（倒数第3个交易日）涨停
@@ -15,27 +15,27 @@
 from __future__ import annotations
 
 import glob
-import logging
 import sys
 from pathlib import Path
 
 import pandas as pd
 
-# ---------- 日志 ----------
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        
-    ],
-)
-logger = logging.getLogger("redhover_filter")
+# ---------- 日志（统一标准格式） ----------
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+from utils.log_config import get_logger
+logger = get_logger("红悬停")
 
 # ---------- 配置 ----------
-PROJECT_ROOT = Path(__file__).parent.parent.parent
-
 DATA_DIR = PROJECT_ROOT / "data/kline"
+
+# 涨停阈值
+LIMIT_UP_10 = 9.5    # 主板/中小板 10%涨停
+LIMIT_UP_20 = 19.5   # 创业板/科创板 20%涨停
+LIMIT_UP_30 = 29.5   # 北交所 30%涨停
+# 最小放量比例
+VOLUME_RATIO = 1.5
+
 
 def fetch_st_stocks() -> set:
     """从Tushare实时获取ST股票列表"""
@@ -46,47 +46,37 @@ def fetch_st_stocks() -> set:
         st_df = df[df['name'].str.match(r'^(\*?ST|S\*?ST|S\*?\*?ST)', na=False)]
         return set(st_df['ts_code'].tolist())
     except Exception as e:
-        logging.warning("获取ST股票列表失败: %s", e)
+        logger.warning("获取ST股票列表失败: %s", e)
         return set()
 
 ST_STOCKS = fetch_st_stocks()
-# 涨停阈值
-LIMIT_UP_10 = 9.5    # 主板/中小板 10%涨停
-LIMIT_UP_20 = 19.5   # 创业板/科创板 20%涨停
-# 最小放量比例
-VOLUME_RATIO = 1.5
+logger.info("ST股票数量: %d", len(ST_STOCKS))
 
 
 def get_limit_rate(ts_code: str, pct_chg: float) -> float:
     """根据股票代码判断涨停阈值（10%/20%/30%）"""
     code = ts_code.upper()
-    # 创业板(300/301开头) 和 科创板(688开头) 是20%涨停
     if code.startswith("300") or code.startswith("301") or code.startswith("688"):
         return 0.20
-    # 北交所(9开头) 是30%涨停
     if code.startswith("9"):
         return 0.30
     return 0.10
 
+
 def is_limit_up(ts_code: str, pct_chg: float) -> bool:
     """判断是否涨停（根据板块不同阈值）"""
     rate = get_limit_rate(ts_code, pct_chg)
-    threshold = 9.5 if rate == 0.10 else (19.5 if rate == 0.20 else 29.5)  # 10%板块用9.5，20%用19.5，30%用29.5
+    threshold = 9.5 if rate == 0.10 else (19.5 if rate == 0.20 else 29.5)
     return pct_chg >= threshold
 
 
-def analyze_stock(df: pd.DataFrame, fp: str) -> dict | None:
-    """
-    分析单支股票，返回选股结果或None
-    """
+def analyze_stock(df: pd.DataFrame, ts_code: str) -> dict | None:
     if len(df) < 3:
         return None
 
     row_t2 = df.iloc[-3]
     row_t1 = df.iloc[-2]
     row_t = df.iloc[-1]
-
-    ts_code = Path(fp).stem
 
     # 0. 过滤ST股票
     if ts_code in ST_STOCKS:
@@ -97,9 +87,7 @@ def analyze_stock(df: pd.DataFrame, fp: str) -> dict | None:
         return None
 
     # 计算T-2涨停价
-    pct_t2 = row_t2["pct_chg"]
-    rate_t2 = get_limit_rate(ts_code, pct_t2)
-    threshold_t2 = 10.0 if rate_t2 == 0.10 else 19.5
+    rate_t2 = get_limit_rate(ts_code, row_t2["pct_chg"])
     t2_limit_price = round(row_t2["pre_close"] * (1 + rate_t2), 2)
 
     # 2. T-1日条件（不限是否涨停，只看低价和放量）
@@ -113,7 +101,7 @@ def analyze_stock(df: pd.DataFrame, fp: str) -> dict | None:
         return None
 
     return {
-        "ts_code": "",  # 从文件名获取
+        "ts_code": ts_code,
         "date_t2": str(row_t2["date"]),
         "date_t1": str(row_t1["date"]),
         "date_t": str(row_t["date"]),
@@ -128,12 +116,18 @@ def analyze_stock(df: pd.DataFrame, fp: str) -> dict | None:
 
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser(description="跳高选股")
+    parser.add_argument("--out-dir", help="输出目录，保存result_跳高.txt")
+    args = parser.parse_args()
+
     csv_files = glob.glob(str(DATA_DIR / "*.csv"))
     logger.info("共找到 %d 支股票数据", len(csv_files))
 
     results = []
 
     for fp in csv_files:
+        ts_code = Path(fp).stem
         try:
             df = pd.read_csv(fp, parse_dates=["date"])
             df = df.sort_values("date").reset_index(drop=True)
@@ -141,11 +135,10 @@ def main():
             logger.warning("读取 %s 失败: %s", fp, e)
             continue
 
-        result = analyze_stock(df, fp)
+        result = analyze_stock(df, ts_code)
         if result:
-            result["ts_code"] = Path(fp).stem  # 从文件名获取股票代码
             results.append(result)
-            logger.info("✓ %s 通过筛选 T-2=%.2f%%涨停 T-1低价守住涨停价 T日未涨停 T-1放量%.2fx", 
+            logger.info("✅ %s 通过筛选 T-2=%.2f%%涨停 T-1低价守住涨停价 T日未涨停 T-1放量%.2fx",
                        result["ts_code"], result["t2_pct"], result["t1_vol_ratio"])
 
     logger.info("=" * 50)
@@ -154,13 +147,12 @@ def main():
     if results:
         results.sort(key=lambda x: x["t1_vol_ratio"], reverse=True)
 
-        print("\n筛选出的股票：")
-        print(f"{'代码':<12} {'T-2涨停':<10} {'T-1涨幅':<8} {'T-1最低':<8} {'T-1放量':<8} {'T涨幅':<8} {'T最低':<8}")
-        print("-" * 70)
+        logger.info("筛选出的股票：")
         for r in results:
-            print(f"{r['ts_code']:<12} {r['t2_pct']:>6.2f}%  {r['t1_pct']:>6.2f}%  {r['t1_low']:>6.2f}  {r['t1_vol_ratio']:>5.2f}x  {r['t_pct']:>6.2f}%  {r['t_low']:>6.2f}")
+            logger.info("  %s T-2涨停%.2f%% T-1涨幅%.2f%% T-1最低%.2f T-1放量%.2fx T涨幅%.2f%% T最低%.2f",
+                       r['ts_code'], r['t2_pct'], r['t1_pct'], r['t1_low'],
+                       r['t1_vol_ratio'], r['t_pct'], r['t_low'])
 
-        # 保存结果
         output_file = "/tmp/stock_notifications/redhover_result.txt"
         Path(output_file).parent.mkdir(parents=True, exist_ok=True)
         with open(output_file, "w", encoding="utf-8") as f:

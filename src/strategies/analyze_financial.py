@@ -8,24 +8,16 @@ from __future__ import annotations
 
 import argparse
 import glob
-import logging
 import sys
 from collections import defaultdict
 from pathlib import Path
-PROJECT_ROOT = Path(__file__).parent.parent.parent
 
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+from utils.log_config import get_logger
+logger = get_logger("财务选股")
 
 import pandas as pd
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler("log/financial_filter.log", encoding="utf-8"),
-    ],
-)
-logger = logging.getLogger("financial_filter")
 
 DATA_DIR = PROJECT_ROOT / "data/financial"
 MIN_GROWTH_RATE = 0.22
@@ -50,9 +42,6 @@ def period_key(end_date: str):
 
 
 def check_stock(code: str) -> dict | None:
-    """
-    检查单支股票是否同时满足年报/Q1/Q2/Q3四个报表类型的筛选条件
-    """
     fp = DATA_DIR / f"{code}.csv"
     if not fp.exists():
         return None
@@ -86,18 +75,16 @@ def check_stock(code: str) -> dict | None:
         for pkey in required:
             records = groups.get(pkey, [])
             if len(records) < 3:
-                return None  # 缺少任何一种报表，直接淘汰
+                return None
 
             np_vals = [r['np'] for r in records]
             eps_vals = [r['eps'] for r in records]
             dates = [r['end_date'] for r in records]
 
-            # 取最后3条（从旧到新）
             np3 = np_vals[-3:]
             eps3 = eps_vals[-3:]
             d3 = dates[-3:]
 
-            # 最近一期（年报/Q1/Q2/Q3各自最新一期）净利润和EPS必须为正
             if np3[-1] <= 0 or eps3[-1] <= 0:
                 return None
 
@@ -138,7 +125,7 @@ def main(out_dir: Path | None = None):
         r = check_stock(code)
         if r:
             results.append((code, r))
-            logger.info("✓ %s 年报:%s/%s/%s Q1:%s Q2:%s Q3:%s",
+            logger.info("✅ %s 年报:%s/%s/%s Q1:%s Q2:%s Q3:%s",
                        code,
                        r['annual']['dates'][0], r['annual']['dates'][1], r['annual']['dates'][2],
                        r['Q1']['dates'][1], r['Q2']['dates'][1], r['Q3']['dates'][1])
@@ -152,7 +139,6 @@ def main(out_dir: Path | None = None):
     logger.info("=" * 60)
     logger.info("筛选结果：共 %d 支股票同时满足年报+Q1+Q2+Q3 连续2年增速均≥25%%", len(results))
 
-    # 输出股票代码到 result_实力.txt
     if out_dir:
         out_dir.mkdir(parents=True, exist_ok=True)
         result_txt = out_dir / "result_实力.txt"

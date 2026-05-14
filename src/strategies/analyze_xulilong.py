@@ -12,24 +12,20 @@
 from __future__ import annotations
 
 import glob
-import logging
 import sys
 from pathlib import Path
 
 import pandas as pd
 
-# ---------- 日志 ----------
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout)],
-)
-logger = logging.getLogger("蓄力龙")
+# ---------- 日志（统一标准格式） ----------
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+from utils.log_config import get_logger
+logger = get_logger("蓄力龙")
 
 # ---------- 配置 ----------
-PROJECT_ROOT = Path(__file__).parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data/kline"
-OUT_DIR = Path(__file__).parent.parent.parent / "daily_result/today"
+OUT_DIR = PROJECT_ROOT / "daily_result/today"
 
 # 条件参数
 RISE_THRESHOLD = 3.0   # 涨幅阈值（%）
@@ -60,7 +56,6 @@ def analyze_one(code: str, df: pd.DataFrame) -> bool:
     day_t   = df.iloc[-1]  # T
 
     # ---- 条件1: T-2日阳线 + 涨幅 > 3% + 放量 ----
-    # 用 pct_chg（当日涨跌幅）判断涨跌
     t2_pct   = float(day_t2['pct_chg'])
     t2_open  = float(day_t2['open'])
     t2_close = float(day_t2['close'])
@@ -115,6 +110,7 @@ def main():
     import argparse
     parser = argparse.ArgumentParser(description="蓄力龙选股")
     parser.add_argument("--out-dir", type=str, default=str(OUT_DIR))
+    parser.add_argument("--log", default="log/select_results.log", help="日志文件")
     args = parser.parse_args()
 
     out_dir = Path(args.out_dir)
@@ -156,7 +152,7 @@ def main():
             logger.debug("分析 %s 失败: %s", code, e)
 
     # 保存结果
-    result_path = out_dir / "result_xulilong.txt"
+    result_path = out_dir / "result_蓄力.txt"
     with open(result_path, "w") as f:
         f.write(f"蓄力龙选股结果 ({len(selected)}只)\n")
         f.write("=" * 60 + "\n")
