@@ -154,13 +154,12 @@ def main():
     # 保存结果
     result_path = out_dir / "result_蓄力.txt"
     with open(result_path, "w") as f:
-        f.write(f"蓄力龙选股结果 ({len(selected)}只)\n")
-        f.write("=" * 60 + "\n")
+        f.write("蓄力龙战法\n")
         if selected:
             df_out = pd.DataFrame(selected)
             df_out = df_out.sort_values("pct_chg", ascending=False)
             for _, row in df_out.iterrows():
-                f.write(f"{row['code']} {row['date']} 收盘={row['close']:.2f} 涨幅={row['pct_chg']:.2f}%\n")
+                f.write(f"{row['code']}\n")
         else:
             f.write("今日无符合条件的股票\n")
 
