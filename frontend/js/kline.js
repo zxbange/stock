@@ -36,30 +36,30 @@ var _viewDate = null;
 var _alias = {
   '补票': '补票龙', '回头': '回头龙', '填坑': '填坑龙',
   '大波': '大波龙', '跳高': '跳高龙', '实力': '实力龙',
-  'xulilong': '蓄力龙'
+  '蓄力': '蓄力龙'
 };
 var _icons = {
-  '补票':'📈','回头':'🔁','填坑':'🕳️','大波':'🌊','跳高':'🦘','实力':'💎','xulilong':'⚡'
+  '补票':'📈','回头':'🔁','填坑':'🕳️','大波':'🌊','跳高':'🦘','实力':'💎','蓄力':'⚡'
 };
 
 // 从 result_*.txt 动态构建侧边栏
 function loadSidebar() {
-  var strats = ['补票','回头','填坑','大波','跳高','实力','xulilong'];
+  var strats = ['补票','回头','填坑','大波','跳高','实力','蓄力'];
   var loaded = 0, total = 0;
   var byStrat = {};
 
   strats.forEach(function(strat) {
     var url = _baseDir + 'result_' + strat + '.txt';
-    if (strat === 'xulilong') { console.log('[DEBUG] Fetching:', url); }
+    if (strat === '蓄力') { console.log('[DEBUG] Fetching:', url); }
     fetch(url).then(function(r) {
-      if (strat === 'xulilong') { console.log('[DEBUG] Response:', r.status, r.ok); }
+      if (strat === '蓄力') { console.log('[DEBUG] Response:', r.status, r.ok); }
       if (!r.ok) return [];
       return r.text();
     }).then(function(text) {
       var lines = text.trim().split('\n');
       // 首行是战法名，跳过；提取股票代码（支持纯码或带备注的格式）
       var codes = lines.slice(1).filter(function(l) { return /^\d{6}\.(SZ|SH|BJ)/.test(l.trim()); }).map(function(l) { return l.trim().substring(0, 9); });
-      if (strat === 'xulilong') { console.log('[DEBUG] xulilong loaded, lines:', lines.length, 'codes:', codes.length, 'first 3:', codes.slice(0,3)); }
+      if (strat === '蓄力') { console.log('[DEBUG] 蓄力 loaded, lines:', lines.length, 'codes:', codes.length, 'first 3:', codes.slice(0,3)); }
       byStrat[strat] = codes;
       loaded++;
       if (loaded === strats.length) {
@@ -78,9 +78,9 @@ function buildSidebar(byStrat) {
   var html = '';
   var totalCnt = 0;
 
-  var order = ['补票','回头','填坑','大波','跳高','实力','xulilong'];
+  var order = ['补票','回头','填坑','大波','跳高','实力','蓄力'];
   // DEBUG: 添加标记验证xulilong数据
-  console.log('[DEBUG] buildSidebar called, xulilong codes:', (byStrat['xulilong'] || []).length, 'raw:', JSON.stringify(byStrat['xulilong'] || []));
+  console.log('[DEBUG] buildSidebar called, 蓄力 codes:', (byStrat['蓄力'] || []).length, 'raw:', JSON.stringify(byStrat['蓄力'] || []));
   order.forEach(function(strat) {
     var codes = byStrat[strat] || [];
     if (codes.length === 0) return;
