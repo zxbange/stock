@@ -72,9 +72,13 @@ PREV_TRADE_DATE=$(python3 "$SRC/utils/get_prev_trade_date.py")
 PREV_DIR="$PROJECT_ROOT/daily_result/$PREV_TRADE_DATE"
 
 if [ -d "$TODAY_DIR" ] && [ "$(ls -A $TODAY_DIR 2>/dev/null)" ]; then
-    mkdir -p "$PREV_DIR"
-    mv $TODAY_DIR/* $PREV_DIR/ 2>/dev/null
-    log "[归档] 上一交易日 $PREV_DIR 已创建"
+    if [ ! -d "$PREV_DIR" ]; then
+        mkdir -p "$PREV_DIR"
+        mv $TODAY_DIR/* $PREV_DIR/ 2>/dev/null
+        log "[归档] 上一交易日内容已归档至 $PREV_DIR"
+    else
+        log "[归档] 上一交易日目录 $PREV_DIR 已存在，跳过归档"
+    fi
 fi
 
 # 清理30天前历史
@@ -122,5 +126,8 @@ run_step "生成通知文件" "python3 $SRC/generators/gen_notification.py"
 
 # ---------- 步骤10：生成 dates.json ----------
 run_step "生成 dates.json" "python3 $SRC/generators/gen_index.py"
+
+# ---------- 步骤11：计算抱团拥挤度 ----------
+run_step "抱团拥挤度" "python3 $SRC/generators/gen_market_crowding.py"
 
 log_section "每日股票分析任务全部完成 ($(date '+%Y-%m-%d %H:%M:%S'))"
