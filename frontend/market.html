@@ -11,37 +11,29 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:#111;font-family:'PingFang SC','Microsoft YaHei',sans-serif}
 .wrap{display:flex;flex-direction:column;height:100vh;max-width:700px;margin:0 auto}
-
-/* ── header ── */
 .header{padding:16px 20px 10px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #2a2a3e}
 .back-btn{background:#252540;border:none;color:#888;cursor:pointer;padding:5px 12px;border-radius:6px;font-size:12px}
 .back-btn:hover{background:#333355;color:#fff}
 .header h1{font-size:16px;color:#fff;font-weight:bold}
-
-/* ── stat cards ── */
 .stat-row{display:flex;gap:10px;padding:12px 16px}
 .scard{flex:1;background:#1a1a2e;border-radius:10px;padding:12px 14px;border:1px solid #2a2a3e;text-align:center}
 .scard .sval{font-size:22px;color:#ffea00;font-weight:bold;margin-bottom:3px}
 .scard .sval.red{color:#ff4d4d}
 .scard .sval.green{color:#3dcca5}
 .scard .slabel{font-size:10px;color:#666}
-
-/* ── chart area ── */
 .chart-wrap{flex:1;min-height:0;padding:0 16px 16px;display:flex;flex-direction:column}
 .chart-header{font-size:12px;color:#555;padding:8px 0 4px}
-.chart-area{flex:1;min-height:200px;position:relative}
-#chart{width:100%;height:100%;position:absolute;top:0;left:0}
-
-/* ── date range ── */
+.chart-area{flex:1;min-height:200px;position:relative;background:#111122;border-radius:8px;overflow:hidden}
+.chart-area canvas{width:100%!important;height:100%!important}
 .range-row{display:flex;gap:8px;padding:0 16px 12px;align-items:center}
 .range-label{font-size:11px;color:#555;flex-shrink:0}
 .range-select{background:#1a1a2e;border:1px solid #333355;color:#fff;font-size:12px;padding:5px 8px;border-radius:5px;cursor:pointer;flex:1}
 .range-select option{background:#1a1a2e}
 .range-tip{font-size:10px;color:#444}
-
-/* ── footer ── */
 .footer{padding:8px 16px;text-align:center;font-size:10px;color:#333;border-top:1px solid #1e1e2e}
 .footer span{color:#555}
+#loading-msg{text-align:center;color:#555;padding:40px 0;font-size:13px}
+#loading-msg.err{color:#ff4d4d}
 </style>
 </head>
 <body>
@@ -79,8 +71,8 @@ html,body{height:100%;background:#111;font-family:'PingFang SC','Microsoft YaHei
 
   <div class="chart-wrap">
     <div class="chart-header" id="chartHeader">加载中...</div>
-    <div class="chart-area">
-      <div id="chart"></div>
+    <div class="chart-area" id="chartArea">
+      <div id="loading-msg">加载中...</div>
     </div>
   </div>
 
@@ -89,50 +81,52 @@ html,body{height:100%;background:#111;font-family:'PingFang SC','Microsoft YaHei
   </div>
 </div>
 
-<script src="lightweight-charts.standalone.production.js?v=210536.2"></script>
+<script src="lightweight-charts.standalone.production.js?v=210536.3"></script>
 <script>
 (function() {
-  var _baseVer = '210537';
-  var _baseDir = '/daily_result/today/';
-  var _rawData = null;
   var _chart = null;
   var _series = null;
+  var _rawData = null;
   var _range = '1y';
-  var _lastRange = null;
+  var _loading = document.getElementById('loading-msg');
+  var _chartArea = document.getElementById('chartArea');
 
-  // ── 颜色 ──
-  var COLOR_BG       = '#111122';
-  var COLOR_GRID    = '#1e1e2e';
-  var COLOR_TEXT    = '#666666';
-  var COLOR_LINE    = '#ffea00';
-  var COLOR_CROSS   = '#555555';
-
-  // ── 加载 CSV ──
-  function loadData() {
-    var url = '/data/market_crowding.csv';
-    return fetch(url + '?t=' + Date.now())
-      .then(function(r) { return r.ok ? r.text() : Promise.reject(); })
-      .then(function(txt) {
-        var lines = txt.trim().split('\n');
-        var header = lines[0].split(',');
-        var rows = [];
-        for (var i = 1; i < lines.length; i++) {
-          var vals = lines[i].split(',');
-          var obj = {};
-          header.forEach(function(h, idx) { obj[h.trim()] = vals[idx] && vals[idx].trim(); });
-          rows.push(obj);
-        }
-        _rawData = rows;
-        return rows;
-      });
+  function log(msg) {
+    console.log('[market]', msg);
   }
 
-  // ── 过滤数据 ──
-  function filterData(rows, rangeKey) {
+  function showErr(msg) {
+    if (_loading) { _loading.textContent = msg; _loading.className = 'err'; }
+    log('ERROR: ' + msg);
+  }
+
+  function showMsg(msg) {
+    if (_loading) { _loading.textContent = msg; _loading.className = ''; }
+  }
+
+  function parseCSV(txt) {
+    var lines = txt.trim().split('\n');
+    var header = lines[0].split(',');
+    var rows = [];
+    for (var i = 1; i < lines.length; i++) {
+      var vals = lines[i].split(',');
+      var obj = {};
+      header.forEach(function(h, idx) {
+        obj[h.trim()] = vals[idx] != null ? vals[idx].trim() : '';
+      });
+      rows.push(obj);
+    }
+    return rows;
+  }
+
+  function filterRows(rows, rangeKey) {
     if (!rows.length) return [];
     var lastDate = rows[rows.length - 1].date;
-    var cutoff;
-    var d = new Date(lastDate.slice(0,4), parseInt(lastDate.slice(4,2))-1, lastDate.slice(6,8));
+    var d = new Date(
+      parseInt(lastDate.slice(0, 4), 10),
+      parseInt(lastDate.slice(4, 6), 10) - 1,
+      parseInt(lastDate.slice(6, 8), 10)
+    );
     if (rangeKey === 'all') {
       return rows;
     } else if (rangeKey === '1y') {
@@ -142,96 +136,154 @@ html,body{height:100%;background:#111;font-family:'PingFang SC','Microsoft YaHei
     } else if (rangeKey === '3m') {
       d.setMonth(d.getMonth() - 3);
     }
-    cutoff = d.toISOString().slice(0,10).replace(/-/g, '');
+    var cutoff = d.toISOString().slice(0, 10).replace(/-/g, '');
     return rows.filter(function(r) { return r.date >= cutoff; });
   }
 
-  // ── 初始化图表 ──
-  function initChart() {
-    var wrap = document.getElementById('chart');
-    var container = document.createElement('div');
-    container.style.position = 'absolute';
-    container.style.top = '0';
-    container.style.left = '0';
-    container.style.width = '100%';
-    container.style.height = '100%';
-    wrap.appendChild(container);
-
-    _chart = LightweightCharts.createChart(container, {
-      layout:       { background: { color: COLOR_BG }, textColor: COLOR_TEXT },
-      grid:         { vertLines: { color: COLOR_GRID }, horzLines: { color: COLOR_GRID } },
-      crosshair:    { mode: LightweightCharts.CrosshairMode.Normal, vertLine: { color: COLOR_CROSS, labelBackgroundColor: '#2a2a3e' }, horzLine: { color: COLOR_CROSS, labelBackgroundColor: '#2a2a3e' } },
-      timeScale:    { borderColor: '#2a2a3e', timeVisible: false },
-      rightPriceScale: { borderColor: '#2a2a3e', scaleMargins: { top: 0.05, bottom: 0.05 } },
-      handleScroll: { mouseWheel: true, pressedMouseMove: true },
-      handleScale:  { mouseWheel: true, pinch: true },
-    });
-
-    _series = _chart.addLineSeries({
-      color:              COLOR_LINE,
-      lineWidth:          1,
-      priceFormat:        { type: 'custom', formatter: function(v) { return v.toFixed(2) + '%'; }, minmov: 0.01, precision: 2 },
-      crosshairMarker:    { backgroundColor: COLOR_LINE, borderColor: '#fff', radius: 4 },
-    });
-
-    // 响应窗口resize
-    window.addEventListener('resize', function() {
-      var w = wrap.clientWidth;
-      var h = wrap.clientHeight;
-      _chart.resize(w, h);
+  function makeBars(rows) {
+    return rows.map(function(r) {
+      return {
+        time:  r.date.slice(0, 4) + '-' + r.date.slice(4, 6) + '-' + r.date.slice(6, 8) + ' 00:00:00',
+        value: parseFloat(r.crowding_pct) || 0
+      };
     });
   }
 
-  // ── 渲染数据 ──
-  function render(rows) {
-    var filtered = filterData(rows, _range);
-    if (!filtered.length) return;
-
-    var bars = filtered.map(function(r) {
-      return {
-        time:  r.date.slice(0,4) + '-' + r.date.slice(4,6) + '-' + r.date.slice(6,8) + 'T00:00:00',
-        value: parseFloat(r.crowding_pct),
-      };
-    });
-
-    _series.setData(bars);
-    _chart.timeScale().fitContent();
-
-    // 显示头部
-    var last = filtered[filtered.length - 1];
-    var prev = filtered.length >= 2 ? filtered[filtered.length - 2] : null;
-    document.getElementById('chartHeader').textContent =
-      '抱团拥挤度走势  ·  ' + filtered[0].date.slice(0,4) + '-' + filtered[0].date.slice(4,6) + '-' + filtered[0].date.slice(6,8)
-      + ' 至 ' + last.date.slice(0,4) + '-' + last.date.slice(4,6) + '-' + last.date.slice(6,8)
-      + '  ·  ' + filtered.length + ' 个交易日';
-
-    // 三个指标
-    var todayVal = parseFloat(last.crowding_pct);
-    document.getElementById('valToday').textContent = todayVal.toFixed(2) + '%';
-    document.getElementById('valToday').className = 'sval ' + (todayVal >= 50 ? 'red' : todayVal >= 35 ? '' : 'green');
+  function updateStats(last, prev) {
+    var todayVal = parseFloat(last.crowding_pct) || 0;
+    var el = document.getElementById('valToday');
+    el.textContent = todayVal.toFixed(2) + '%';
+    el.className = 'sval ' + (todayVal >= 50 ? 'red' : todayVal >= 35 ? '' : 'green');
 
     if (prev) {
-      var chg = todayVal - parseFloat(prev.crowding_pct);
+      var chg = todayVal - (parseFloat(prev.crowding_pct) || 0);
       var chgEl = document.getElementById('valChg');
       chgEl.textContent = (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%';
       chgEl.className = 'sval ' + (chg >= 0 ? 'red' : 'green');
     }
-    document.getElementById('valStocks').textContent = last.total_stocks;
 
-    _lastRange = _range;
+    document.getElementById('valStocks').textContent = last.total_stocks;
   }
 
-  // ── 主流程 ──
-  loadData().then(function(rows) {
-    initChart();
-    render(rows);
+  function renderChart(rows) {
+    var filtered = filterRows(rows, _range);
+    if (!filtered.length) {
+      showErr('无数据');
+      return;
+    }
 
-    document.getElementById('rangeSelect').addEventListener('change', function() {
-      _range = this.value;
-      render(rows);
+    // remove loading message
+    if (_loading && _loading.parentNode) _loading.parentNode.removeChild(_loading);
+    _loading = null;
+
+    var bars = makeBars(filtered);
+    var last = filtered[filtered.length - 1];
+    var prev = filtered.length >= 2 ? filtered[filtered.length - 2] : null;
+
+    // header
+    var firstD = filtered[0].date;
+    var lastD = filtered[filtered.length - 1].date;
+    document.getElementById('chartHeader').textContent =
+      '抱团拥挤度走势  ·  ' +
+      firstD.slice(0,4) + '-' + firstD.slice(4,6) + '-' + firstD.slice(6,8) +
+      ' 至 ' +
+      lastD.slice(0,4) + '-' + lastD.slice(4,6) + '-' + lastD.slice(6,8) +
+      '  ·  ' + filtered.length + ' 个交易日';
+
+    updateStats(last, prev);
+
+    // create or update chart
+    if (!_chart) {
+      _chartArea.style.position = 'relative';
+      var opts = {
+        layout: {
+          background: { color: '#111122' },
+          textColor: '#666666'
+        },
+        grid: {
+          vertLines: { color: '#1e1e2e' },
+          horzLines: { color: '#1e1e2e' }
+        },
+        crosshair: {
+          vertLine: { color: '#555555', labelBackgroundColor: '#2a2a3e' },
+          horzLine: { color: '#555555', labelBackgroundColor: '#2a2a3e' }
+        },
+        timeScale: {
+          borderColor: '#2a2a3e',
+          timeVisible: false
+        },
+        rightPriceScale: {
+          borderColor: '#2a2a3e',
+          scaleMargins: { top: 0.05, bottom: 0.05 }
+        },
+        width:  _chartArea.clientWidth,
+        height: _chartArea.clientHeight || 300
+      };
+
+      try {
+        _chart = LightweightCharts.createChart(_chartArea, opts);
+      } catch(e) {
+        showErr('图表创建失败: ' + e.message);
+        log('chart error: ' + e.message);
+        return;
+      }
+
+      _series = _chart.addLineSeries({
+        color:       '#ffea00',
+        lineWidth:   1,
+        priceFormat: {
+          type:      'custom',
+          formatter: function(v) { return v.toFixed(2) + '%'; },
+          minmov:    0.01,
+          precision: 2
+        }
+      });
+
+      // resize handler
+      window.addEventListener('resize', function() {
+        if (_chart) _chart.resize(_chartArea.clientWidth, _chartArea.clientHeight);
+      });
+    }
+
+    try {
+      _series.setData(bars);
+      _chart.timeScale().fitContent();
+      log('chart rendered, bars=' + bars.length);
+    } catch(e) {
+      showErr('数据渲染失败: ' + e.message);
+      log('render error: ' + e.message + ' firstBar=' + JSON.stringify(bars[0]));
+    }
+  }
+
+  // init
+  log('page load, fetching CSV...');
+  showMsg('加载中...');
+
+  fetch('/data/market_crowding.csv?t=' + Date.now())
+    .then(function(r) {
+      log('fetch status=' + r.status);
+      if (!r.ok) return Promise.reject('HTTP ' + r.status);
+      return r.text();
+    })
+    .then(function(txt) {
+      log('csv text len=' + txt.length);
+      var rows = parseCSV(txt);
+      log('parsed rows=' + rows.length);
+      _rawData = rows;
+      renderChart(rows);
+    })
+    .catch(function(err) {
+      var msg = typeof err === 'string' ? err : (err.message || JSON.stringify(err));
+      showErr('数据加载失败: ' + msg);
+      log('catch: ' + msg);
     });
-  }).catch(function() {
-    document.getElementById('chartHeader').textContent = '数据加载失败，请稍后刷新重试';
+
+  // range change
+  document.getElementById('rangeSelect').addEventListener('change', function() {
+    _range = this.value;
+    if (_rawData) {
+      renderChart(_rawData);
+    }
   });
 })();
 </script>
