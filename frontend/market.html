@@ -109,7 +109,7 @@ html,body{height:100%;background:#111;font-family:'PingFang SC','Microsoft YaHei
 
   // ── 加载 CSV ──
   function loadData() {
-    var url = /data/market_crowding.csv;
+    var url = '/data/market_crowding.csv';
     return fetch(url + '?t=' + Date.now())
       .then(function(r) { return r.ok ? r.text() : Promise.reject(); })
       .then(function(txt) {
