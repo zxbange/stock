@@ -130,4 +130,7 @@ run_step "生成 dates.json" "python3 $SRC/generators/gen_index.py"
 # ---------- 步骤11：计算抱团拥挤度 ----------
 run_step "抱团拥挤度" "python3 $SRC/generators/gen_market_crowding.py"
 
+
+# ---------- 步骤12：生成每日市场总结 ----------
+run_step "每日市场总结" "python3 $SRC/generators/gen_market_summary.py --mode quick"
 log_section "每日股票分析任务全部完成 ($(date '+%Y-%m-%d %H:%M:%S'))"

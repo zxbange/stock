@@ -23,3 +23,5 @@ frontend/stock_names.json
 
 # Market data
 data/market_crowding.csv
+data/stock_industry.json
+data/industry_temp_20d.json

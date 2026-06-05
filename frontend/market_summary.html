@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>每日市场总结 · K线精选</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#111;font-family:'PingFang SC','Microsoft YaHei',sans-serif}
+.wrap{display:flex;flex-direction:column;height:100vh;max-width:700px;margin:0 auto}
+
+.header{padding:14px 18px 10px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #2a2a3e}
+.back-btn{background:#252540;border:none;color:#888;cursor:pointer;padding:5px 12px;border-radius:6px;font-size:12px}
+.back-btn:hover{background:#333355;color:#fff}
+.header h1{font-size:15px;color:#fff;font-weight:bold}
+.header-date{font-size:11px;color:#555;margin-left:auto}
+
+.section{padding:12px 16px;border-bottom:1px solid #1e1e2e}
+.section-title{font-size:11px;color:#555;margin-bottom:8px;letter-spacing:1px}
+
+.temperature-row{display:flex;gap:10px;margin-bottom:10px}
+.tcard{flex:1;background:#1a1a2e;border-radius:10px;padding:12px 12px;border:1px solid #2a2a3e;text-align:center}
+.tcard .tval{font-size:24px;font-weight:bold;margin-bottom:3px}
+.tcard .tval.up{color:#ef5350}
+.tcard .tval.dn{color:#26a69a}
+.tcard .tval.neutral{color:#ffea00}
+.tcard .tlabel{font-size:10px;color:#555}
+
+.index-table{width:100%;border-collapse:collapse}
+.index-table td{padding:6px 8px;font-size:12px;border-bottom:1px solid #1a1a2e}
+.index-table tr:last-child td{border-bottom:none}
+.index-table .iname{color:#888}
+.index-table .iclose{color:#fff;font-weight:bold;text-align:right}
+.index-table .ichg{text-align:right;font-weight:bold}
+.index-table .ichg.up{color:#ef5350}
+.index-table .ichg.dn{color:#26a69a}
+
+.breadth-row{display:flex;gap:8px;margin-top:8px}
+.bitem{flex:1;background:#1a1a2e;border-radius:8px;padding:8px;text-align:center}
+.bitem .bval{font-size:16px;font-weight:bold;margin-bottom:2px}
+.bitem .blabel{font-size:10px;color:#555}
+.bitem.up .bval{color:#ef5350}
+.bitem.dn .bval{color:#26a69a}
+.bitem.flat .bval{color:#888}
+
+.industry-list{display:flex;flex-direction:column;gap:6px}
+.industry-item{display:flex;align-items:center;gap:8px;padding:6px 8px;background:#1a1a2e;border-radius:8px}
+.industry-item .iname{flex:1;font-size:12px;color:#ccc}
+.industry-item .itemp{font-size:13px;font-weight:bold;color:#ffea00}
+.industry-item .bar-wrap{flex:0 0 80px;height:4px;background:#252540;border-radius:2px;overflow:hidden}
+.industry-item .bar-fill{height:100%;border-radius:2px;background:#ffea00}
+
+.risk-section{background:#1a1a2e;border-radius:10px;padding:12px;border:1px solid #2a2a3e}
+.risk-row{display:flex;gap:8px;margin-bottom:8px}
+.risk-item{flex:1;background:#252540;border-radius:6px;padding:8px 10px;font-size:11px;color:#888}
+.risk-item span{color:#fff;font-weight:bold}
+.risk-item.up span{color:#ef5350}
+.risk-item.dn span{color:#26a69a}
+
+.style-row{font-size:12px;color:#555;padding:4px 0}
+.style-row span{color:#fff;font-weight:bold}
+
+.trend-note{font-size:11px;color:#555;line-height:1.6;margin-top:6px}
+
+.footer{padding:8px 16px;text-align:center;font-size:10px;color:#333;border-top:1px solid #1e1e2e}
+.footer span{color:#555}
+
+#loading-msg{text-align:center;color:#555;padding:60px 0;font-size:13px}
+#loading-msg.err{color:#ff4d4d}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <button class="back-btn" onclick="history.back()">← 返回</button>
+    <h1>每日市场总结</h1>
+    <span class="header-date" id="headerDate">--</span>
+  </div>
+
+  <div id="loading-msg">加载中...</div>
+  <div id="content" style="display:none">
+
+    <!-- 市场温度 -->
+    <div class="section" id="tempSection">
+      <div class="section-title">市场温度</div>
+      <div class="temperature-row">
+        <div class="tcard">
+          <div class="tval neutral" id="mktTemp">--</div>
+          <div class="tlabel">全市场温度</div>
+        </div>
+        <div class="tcard">
+          <div class="tval" id="mktTempLevel">--</div>
+          <div class="tlabel">温度解读</div>
+        </div>
+        <div class="tcard">
+          <div class="tval" id="mktAmount">--</div>
+          <div class="tlabel">成交额(亿元)</div>
+        </div>
+      </div>
+
+      <!-- 主要指数 -->
+      <table class="index-table" id="indexTable">
+        <thead><tr><th style="text-align:left;color:#555;font-size:11px;font-weight:400">指数</th><th style="text-align:right;color:#555;font-size:11px;font-weight:400">收盘</th><th style="text-align:right;color:#555;font-size:11px;font-weight:400">涨跌幅</th></tr></thead>
+        <tbody id="indexBody"></tbody>
+      </table>
+
+      <!-- 涨跌家数 -->
+      <div class="breadth-row">
+        <div class="bitem up" id="breadthUp"><div class="bval">--</div><div class="blabel">上涨</div></div>
+        <div class="bitem dn" id="breadthDn"><div class="bval">--</div><div class="blabel">下跌</div></div>
+        <div class="bitem flat" id="breadthFlat"><div class="bval">--</div><div class="blabel">平盘</div></div>
+      </div>
+    </div>
+
+    <!-- 行业温度 -->
+    <div class="section">
+      <div class="section-title">行业温度 · TOP5（高温度=市场偏好强）</div>
+      <div class="industry-list" id="hotIndustries"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">行业温度 · BOTTOM5（低温度=持续弱势，注意风险）</div>
+      <div class="industry-list" id="coldIndustries"></div>
+    </div>
+
+    <!-- 市场风格 & 风险提示 -->
+    <div class="section">
+      <div class="section-title">市场风格与风险提示</div>
+      <div class="risk-section">
+        <div class="style-row">风格偏好：<span id="styleBias">--</span></div>
+        <div style="height:6px"></div>
+        <div class="risk-row">
+          <div class="risk-item">沪深300 <span id="hs300Chg">--</span></div>
+          <div class="risk-item">创业板指 <span id="cybChg">--</span></div>
+        </div>
+      </div>
+      <div class="trend-note" id="riskNote"></div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <span>数据来源：Tushare · 每日17:00更新</span>
+  </div>
+</div>
+
+<script>
+(function() {
+  var BASE = '/daily_result/today/market_summary.json';
+  var _data = null;
+
+  function tempLevel(t) {
+    if (t >= 70) return '极热 · 警惕泡沫';
+    if (t >= 55) return '偏热 · 注意回调';
+    if (t >= 40) return '中性 · 震荡格局';
+    if (t >= 25) return '偏冷 · 谨慎防御';
+    return '极冷 · 超卖区间';
+  }
+
+  function riskNote(t, hot, cold) {
+    var notes = [];
+    if (t >= 60) notes.push('市场情绪过热的行业注意回调风险');
+    if (t <= 25) notes.push('市场整体偏冷，保持防御配置');
+    if (cold.length > 0) {
+      var lowInds = cold.filter(function(i) { return i[1] < 20; }).map(function(i) { return i[0]; });
+      if (lowInds.length > 0) notes.push('弱势行业（温度<20°）需警惕：' + lowInds.slice(0, 3).join('、'));
+    }
+    return notes.length > 0 ? notes.join('；') + '。' : '市场运行平稳，无明显风险预警。';
+  }
+
+  function renderBar(temp, max) {
+    var pct = Math.max(2, Math.min(100, (temp / 100) * 100));
+    return pct;
+  }
+
+  function render(data) {
+    _data = data;
+    var mkt = data.market;
+    var temp = mkt.temperature;
+    var level = tempLevel(temp);
+
+    document.getElementById('headerDate').textContent = data.date.slice(0,4) + '-' + data.date.slice(4,6) + '-' + data.date.slice(6,8);
+    document.getElementById('mktTemp').textContent = temp.toFixed(1) + '°';
+    document.getElementById('mktTemp').className = 'tval ' + (temp >= 50 ? 'up' : temp >= 30 ? 'neutral' : 'dn');
+    document.getElementById('mktTempLevel').textContent = level;
+    document.getElementById('mktAmount').textContent = (mkt.total_amount / 1e5).toFixed(0);
+
+    // 指数
+    var indexBody = document.getElementById('indexBody');
+    var INDEX_ORDER = ['000001.SH','000300.SH','000016.SH','000688.SH','399001.SZ','399006.SZ'];
+    INDEX_ORDER.forEach(function(code) {
+      var d = data.indices[code];
+      if (!d) return;
+      var tr = document.createElement('tr');
+      var chg = d.pct_chg;
+      var cls = chg > 0 ? 'up' : chg < 0 ? 'dn' : '';
+      tr.innerHTML = '<td class="iname">' + d.name + '</td>' +
+        '<td class="iclose">' + (d.close != null ? d.close.toFixed(2) : '--') + '</td>' +
+        '<td class="ichg ' + cls + '">' + (chg != null ? (chg > 0 ? '+' : '') + chg.toFixed(2) + '%' : '--') + '</td>';
+      indexBody.appendChild(tr);
+    });
+
+    // 涨跌家数
+    document.getElementById('breadthUp').querySelector('.bval').textContent = mkt.up;
+    document.getElementById('breadthDn').querySelector('.bval').textContent = mkt.down;
+    document.getElementById('breadthFlat').querySelector('.bval').textContent = mkt.flat;
+
+    // 热点行业
+    var hotEl = document.getElementById('hotIndustries');
+    data.hot_industries.forEach(function(item) {
+      var bar = renderBar(item[1], 100);
+      var tr = document.createElement('div');
+      tr.className = 'industry-item';
+      tr.innerHTML = '<div class="iname">' + item[0] + '</div>' +
+        '<div class="bar-wrap"><div class="bar-fill" style="width:' + bar + '%;background:#ef5350"></div></div>' +
+        '<div class="itemp" style="color:#ef5350">' + item[1].toFixed(1) + '°</div>';
+      hotEl.appendChild(tr);
+    });
+
+    // 冷门行业
+    var coldEl = document.getElementById('coldIndustries');
+    data.cold_industries.forEach(function(item) {
+      var bar = renderBar(item[1], 100);
+      var tr = document.createElement('div');
+      tr.className = 'industry-item';
+      tr.innerHTML = '<div class="iname">' + item[0] + '</div>' +
+        '<div class="bar-wrap"><div class="bar-fill" style="width:' + bar + '%;background:#26a69a"></div></div>' +
+        '<div class="itemp" style="color:#26a69a">' + item[1].toFixed(1) + '°</div>';
+      coldEl.appendChild(tr);
+    });
+
+    // 风格
+    document.getElementById('styleBias').textContent = data.style_bias;
+    var hs3 = data.hs300_chg;
+    var cyb = data.cyb_chg;
+    if (hs3 != null) {
+      var hs3el = document.getElementById('hs300Chg');
+      hs3el.textContent = (hs3 > 0 ? '+' : '') + hs3.toFixed(2) + '%';
+      hs3el.className = hs3 > 0 ? 'up' : 'dn';
+    }
+    if (cyb != null) {
+      var cybel = document.getElementById('cybChg');
+      cybel.textContent = (cyb > 0 ? '+' : '') + cyb.toFixed(2) + '%';
+      cybel.className = cyb > 0 ? 'up' : 'dn';
+    }
+
+    // 风险提示
+    document.getElementById('riskNote').textContent = riskNote(temp, data.hot_industries, data.cold_industries);
+
+    document.getElementById('loading-msg').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+  }
+
+  fetch(BASE + '?t=' + Date.now())
+    .then(function(r) { return r.ok ? r.json() : Promise.reject('HTTP ' + r.status); })
+    .then(render)
+    .catch(function(e) {
+      var el = document.getElementById('loading-msg');
+      el.textContent = '数据加载失败: ' + (e.message || e);
+      el.className = 'err';
+    });
+})();
+</script>
+</body>
+</html>
