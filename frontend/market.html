@@ -89,7 +89,7 @@ html,body{height:100%;background:#111;font-family:'PingFang SC','Microsoft YaHei
   </div>
 </div>
 
-<script src="lightweight-charts.standalone.production.js?v=210536"></script>
+<script src="lightweight-charts.standalone.production.js?v=210536.2"></script>
 <script>
 (function() {
   var _baseVer = '210537';
@@ -189,7 +189,7 @@ html,body{height:100%;background:#111;font-family:'PingFang SC','Microsoft YaHei
 
     var bars = filtered.map(function(r) {
       return {
-        time:  r.date + 'T00:00:00',
+        time:  r.date.slice(0,4) + '-' + r.date.slice(4,6) + '-' + r.date.slice(6,8) + 'T00:00:00',
         value: parseFloat(r.crowding_pct),
       };
     });
