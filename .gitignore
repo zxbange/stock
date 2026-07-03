@@ -11,17 +11,21 @@ data/etf/
 data_financial/
 data/financial/
 
-# Daily results
-daily_result/today/
-daily_result/20*/
+# Daily results (final published version - 不追踪任何运行时产物)
+daily_result/
 
 # Logs
 log/*.log
 
 # Frontend generated
 frontend/stock_names.json
+frontend/market_debug.html
+frontend/test_market.html
 
 # Market data
 data/market_crowding.csv
 data/stock_industry.json
 data/industry_temp_20d.json
+data/weipan_metrics.csv
+data/weipan_raw/
+data/weipan_imgs/

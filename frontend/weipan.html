@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>微盘温度计 · K线精选</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#111;font-family:'PingFang SC','Microsoft YaHei',sans-serif}
+.wrap{display:flex;flex-direction:column;height:100vh;max-width:700px;margin:0 auto}
+.header{padding:16px 20px 10px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #2a2a3e}
+.back-btn{background:#252540;border:none;color:#888;cursor:pointer;padding:5px 12px;border-radius:6px;font-size:12px}
+.back-btn:hover{background:#333355;color:#fff}
+.header h1{font-size:16px;color:#fff;font-weight:bold}
+.stat-row{display:flex;gap:10px;padding:12px 16px}
+.scard{flex:1;background:#1a1a2e;border-radius:10px;padding:10px 8px;border:1px solid #2a2a3e;text-align:center}
+.scard .sval{font-size:20px;font-weight:bold;margin-bottom:3px}
+.scard .sval.red{color:#ff4d4d}
+.scard .sval.green{color:#3dcca5}
+.scard .sval.yellow{color:#ffea00}
+.scard .slabel{font-size:10px;color:#666}
+.tab-row{display:flex;gap:6px;padding:0 16px 10px;overflow-x:auto}
+.tab-btn{background:#1a1a2e;border:1px solid #2a2a3e;color:#888;font-size:11px;padding:5px 10px;border-radius:5px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.tab-btn.active{background:#252540;color:#ffea00;border-color:#ffea00}
+.range-row{display:flex;gap:8px;padding:0 16px 10px;align-items:center}
+.range-label{font-size:11px;color:#555;flex-shrink:0}
+.range-select{background:#1a1a2e;border:1px solid #333355;color:#fff;font-size:12px;padding:5px 8px;border-radius:5px;cursor:pointer;flex:1}
+.range-select option{background:#1a1a2e}
+.chart-wrap{flex:1;min-height:0;padding:0 16px 16px;display:flex;flex-direction:column}
+.chart-header{font-size:12px;color:#555;padding:8px 0 4px;display:flex;justify-content:space-between}
+.chart-header .hint{font-size:10px;color:#444}
+.chart-area{flex:1;min-height:200px;height:300px;position:relative;background:#111122;border-radius:8px;overflow:hidden}
+.chart-area canvas{width:100%!important;height:100%!important}
+.footer{padding:8px 16px;text-align:center;font-size:10px;color:#333;border-top:1px solid #1e1e2e}
+.footer span{color:#555}
+#loading-msg{text-align:center;color:#555;padding:40px 0;font-size:13px}
+#loading-msg.err{color:#ff4d4d}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <button class="back-btn" onclick="history.back()">← 返回</button>
+    <h1>微盘温度计</h1>
+  </div>
+
+  <div class="stat-row">
+    <div class="scard">
+      <div class="sval yellow" id="valScore">--</div>
+      <div class="slabel">综合温度</div>
+    </div>
+    <div class="scard">
+      <div class="sval" id="valMicroIdx">--</div>
+      <div class="slabel">等权指数</div>
+    </div>
+    <div class="scard">
+      <div class="sval" id="valMicroMed">--</div>
+      <div class="slabel">市值中位数(亿)</div>
+    </div>
+    <div class="scard">
+      <div class="sval" id="valCrowding">--</div>
+      <div class="slabel">换手率拥挤度</div>
+    </div>
+  </div>
+
+  <div class="tab-row">
+    <button class="tab-btn active" data-metric="score">综合温度</button>
+    <button class="tab-btn" data-metric="relative_ratio">相对估值</button>
+    <button class="tab-btn" data-metric="crowding_ratio">换手率拥挤</button>
+    <button class="tab-btn" data-metric="amount_crowding_ratio">成交额拥挤</button>
+    <button class="tab-btn" data-metric="pe_median">PE</button>
+    <button class="tab-btn" data-metric="pb_median">PB</button>
+    <button class="tab-btn" data-metric="avg_np_growth">盈利增速</button>
+  </div>
+
+  <div class="range-row">
+    <span class="range-label">时间区间</span>
+    <select id="rangeSelect" class="range-select">
+      <option value="6m">近6个月</option>
+      <option value="1y">近1年</option>
+      <option value="2y">近2年</option>
+      <option value="all" selected>全部（2018至今）</option>
+    </select>
+  </div>
+
+  <div class="chart-wrap">
+    <div class="chart-header">
+      <span id="chartTitle">综合温度</span>
+      <span class="hint">蓝=指标分位 / 红=等权指数</span>
+    </div>
+    <div class="chart-area" id="chartArea">
+      <div id="loading-msg">加载中...</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>数据来源：Tushare · 每5个交易日更新 · 2018-01-01起</span>
+  </div>
+</div>
+
+<script src="lightweight-charts.standalone.production.js?v=210536.3"></script>
+<script>
+(function() {
+  var _chart = null;
+  var _mainSeries = null;
+  var _indexSeries = null;
+  var _rawData = null;
+  var _metric = 'score';
+  var _range = 'all';
+  var _loading = document.getElementById('loading-msg');
+  var _chartArea = document.getElementById('chartArea');
+  var _resizeHandler = function() {
+    if (_chart) _chart.resize(_chartArea.clientWidth || 600, _chartArea.clientHeight || 300);
+  };
+  window.addEventListener('resize', _resizeHandler);
+
+  function log(msg) { console.log('[weipan]', msg); }
+  function showErr(msg) {
+    if (_loading) { _loading.textContent = msg; _loading.className = 'err'; }
+    log('ERROR: ' + msg);
+  }
+  function showMsg(msg) {
+    if (_loading) { _loading.textContent = msg; _loading.className = ''; }
+  }
+
+  function parseDate(str) {
+    if (!str) return null;
+    var s = String(str);
+    if (s.length !== 8) return null;
+    return new Date(s.slice(0, 4) + '-' + s.slice(4, 6) + '-' + s.slice(6, 8));
+  }
+
+  function percentileRank(arr, idx) {
+    var vals = arr.slice(0, idx + 1).filter(function(v) { return v !== null && !isNaN(v); });
+    if (vals.length === 0) return 0.5;
+    var rank = 0;
+    var cur = arr[idx];
+    for (var i = 0; i < vals.length - 1; i++) {
+      if (vals[i] < cur) rank++;
+    }
+    return rank / (vals.length - 1);
+  }
+
+  function computePctSeries(data, field) {
+    var series = [];
+    for (var i = 0; i < data.length; i++) {
+      series.push(percentileRank(data.map(function(d) { return d[field]; }), i));
+    }
+    return series;
+  }
+
+  function pctColor(pct) {
+    if (pct >= 0.8) return '#ff4d4d';
+    if (pct >= 0.6) return '#ff9f43';
+    if (pct >= 0.4) return '#ffea00';
+    if (pct >= 0.2) return '#3dcca5';
+    return '#00b4ff';
+  }
+
+  function filterRows(rows, rangeKey) {
+    if (!rows.length) return [];
+    var lastDate = String(rows[rows.length - 1].date);
+    var y = parseInt(lastDate.slice(0, 4), 10);
+    var m = parseInt(lastDate.slice(4, 6), 10) - 1;
+    var d = parseInt(lastDate.slice(6, 8), 10);
+    var lastDt = new Date(y, m, d);
+    if (rangeKey === 'all') return rows;
+    var cutoffDt = new Date(lastDt);
+    if (rangeKey === '1y') cutoffDt.setFullYear(cutoffDt.getFullYear() - 1);
+    else if (rangeKey === '2y') cutoffDt.setFullYear(cutoffDt.getFullYear() - 2);
+    else if (rangeKey === '6m') cutoffDt.setMonth(cutoffDt.getMonth() - 6);
+    var cutoff = String(cutoffDt.getFullYear() * 10000 + (cutoffDt.getMonth() + 1) * 100 + cutoffDt.getDate());
+    return rows.filter(function(r) { return parseInt(r.date) >= parseInt(cutoff); });
+  }
+
+  function parseCSV(txt) {
+    var lines = txt.trim().split('\n');
+    var header = lines[0].split(',');
+    var rows = [];
+    for (var i = 1; i < lines.length; i++) {
+      var vals = lines[i].split(',');
+      var obj = {};
+      for (var j = 0; j < header.length; j++) {
+        var v = vals[j];
+        obj[header[j].trim()] = (v === '' || v === 'nan' || v === 'None') ? null : parseFloat(v);
+      }
+      rows.push(obj);
+    }
+    return rows;
+  }
+
+  function updateStats(data) {
+    var latest = data[data.length - 1];
+    var scorePct = percentileRank(data.map(function(d) { return d.score; }), data.length - 1);
+    var scoreEl = document.getElementById('valScore');
+    scoreEl.textContent = (scorePct * 100).toFixed(1) + '%';
+    scoreEl.style.color = pctColor(scorePct);
+
+    var idxVal = latest ? latest.micro_index : null;
+    var idxEl = document.getElementById('valMicroIdx');
+    idxEl.textContent = (idxVal != null && !isNaN(idxVal)) ? idxVal.toFixed(2) : '--';
+    idxEl.style.color = '#ff6655';
+
+    var medVal = latest ? latest.micro_median : null;
+    var medEl = document.getElementById('valMicroMed');
+    medEl.textContent = (medVal != null && !isNaN(medVal)) ? medVal.toFixed(2) : '--';
+    medEl.style.color = '#ffea00';
+
+    var crdVal = latest ? latest.crowding_ratio : null;
+    var crdPct = crdVal ? percentileRank(data.map(function(d) { return d.crowding_ratio; }), data.length - 1) : null;
+    var crdEl = document.getElementById('valCrowding');
+    crdEl.textContent = crdPct ? (crdPct * 100).toFixed(1) + '%' : '--';
+    crdEl.style.color = crdPct ? pctColor(crdPct) : '#888';
+  }
+
+  function renderChart(rows) {
+    console.log('[renderChart] _metric=', _metric, 'rows=', rows.length);
+    var filtered = filterRows(rows, _range);
+    console.log('[renderChart] filtered=', filtered.length);
+    if (!filtered.length) { showErr('无数据'); return; }
+
+    // remove loading message from DOM
+    if (_loading && _loading.parentNode) {
+      _loading.parentNode.removeChild(_loading);
+      _loading = null;
+    }
+
+    updateStats(filtered);
+
+    var pctSeries = computePctSeries(filtered, _metric);
+    var mainData = [];
+    for (var i = 0; i < filtered.length; i++) {
+      var d = parseDate(filtered[i].date);
+      if (!d) continue;
+      var v = pctSeries[i];
+      if (isNaN(v)) continue;
+      mainData.push({ time: Math.floor(d.getTime() / 1000), value: v });
+    }
+
+    var indexData = [];
+    for (var i = 0; i < filtered.length; i++) {
+      var d = parseDate(filtered[i].date);
+      if (!d) continue;
+      var idxVal = filtered[i].micro_index;
+      if (idxVal != null && !isNaN(idxVal) && idxVal > 0) {
+        indexData.push({ time: Math.floor(d.getTime() / 1000), value: idxVal });
+      }
+    }
+
+    // 检查是否需要完全重建
+    if (!_chart || !_mainSeries) {
+      // 首次渲染或chart被删除——完全重建
+      _chartArea.innerHTML = '';
+      var chartOpts = {
+        layout: { backgroundColor: '#111122', textColor: '#888' },
+        grid: { vertLines: { color: '#1e1e2e' }, horzLines: { color: '#1e1e2e' } },
+        width: _chartArea.clientWidth || 600,
+        height: _chartArea.clientHeight || 300,
+        crosshair: {
+          mode: LightweightCharts.CrosshairMode.Normal,
+          vertLine: { color: '#555', labelBackgroundColor: '#252540' },
+          horzLine: { color: '#555', labelBackgroundColor: '#252540' }
+        },
+        rightPriceScale: { borderColor: '#2a2a3e' },
+        timeScale: { borderColor: '#2a2a3e', timeVisible: false, secondsVisible: false },
+      };
+      _chart = LightweightCharts.createChart(_chartArea, chartOpts);
+
+      _mainSeries = _chart.addLineSeries({ color: '#4488ff', lineWidth: 2, priceLineVisible: false });
+      _indexSeries = _chart.addLineSeries({
+        color: '#ff6655', lineWidth: 1.5, priceLineVisible: false, priceScaleId: 'right',
+      });
+      _chart.priceScale('right').applyOptions({ scaleMargins: { top: 0.1, bottom: 0.1 } });
+
+      // 80%/50%/20%参考线（仅综合温度图）
+      if (_metric === 'score') {
+        [0.8, 0.5, 0.2].forEach(function(p) {
+          _chart.addLineSeries({
+            color: p === 0.5 ? '#444' : '#333',
+            lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed,
+            priceLineVisible: false,
+          }).setData(mainData.map(function(pd) { return { time: pd.time, value: p }; }));
+        });
+      }
+      _mainSeries.setData(mainData);
+      _indexSeries.setData(indexData);
+      _chart.timeScale().fitContent();
+      log('chart created, mainData=' + mainData.length);
+    } else {
+      // 复用chart——直接更新series数据
+      _mainSeries.setData(mainData);
+      _indexSeries.setData(indexData);
+      // 强制fitContent+resize，确保视觉更新
+      _chart.timeScale().fitContent();
+      _chart.resize(_chartArea.clientWidth || 600, _chartArea.clientHeight || 300);
+      log('chart updated, mainData=' + mainData.length);
+    }
+  }
+
+  // 加载数据
+  showMsg('加载中...');
+  log('fetching CSV...');
+  fetch('/data/weipan_metrics.csv?t=' + Date.now())
+    .then(function(r) {
+      log('status=' + r.status);
+      if (!r.ok) return Promise.reject('HTTP ' + r.status);
+      return r.text();
+    })
+    .then(function(txt) {
+      log('csv len=' + txt.length);
+      var rows = parseCSV(txt);
+      log('parsed rows=' + rows.length);
+      _rawData = rows;
+      renderChart(rows);
+    })
+    .catch(function(err) {
+      var msg = typeof err === 'string' ? err : (err.message || JSON.stringify(err));
+      showErr('数据加载失败: ' + msg);
+      log('catch: ' + msg);
+    });
+
+  // Tab切换 - 强制重建图表（每次都销毁重建，保证视觉更新）
+  var tabContainer = document.querySelector('.tab-row');
+  if (tabContainer) {
+    tabContainer.addEventListener('click', function(e) {
+      var btn = e.target.closest('.tab-btn');
+      if (!btn) return;
+      document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      _metric = btn.getAttribute('data-metric');
+      document.getElementById('chartTitle').textContent = btn.textContent;
+      // 强制销毁旧chart，确保每次都走完整重建路径
+      if (_chart) {
+        _chart.remove();
+        _chart = null;
+        _mainSeries = null;
+        _indexSeries = null;
+      }
+      _chartArea.innerHTML = '';
+      if (_rawData) {
+        renderChart(_rawData);
+      }
+    });
+  }
+
+  // 区间切换
+  document.getElementById('rangeSelect').addEventListener('change', function() {
+    _range = this.value;
+    if (_rawData) {
+      renderChart(_rawData);
+    }
+  });
+})();
+</script>
+</body>
+</html>

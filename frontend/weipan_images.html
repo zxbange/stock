@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>微盘温度计 · 图表</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#111;font-family:'PingFang SC','Microsoft YaHei',sans-serif;color:#aaa}
+.wrap{max-width:900px;margin:0 auto;padding:16px}
+.header{padding:16px 0 12px;border-bottom:1px solid #2a2a3e;margin-bottom:20px;display:flex;align-items:center;gap:12px}
+.back-btn{background:#252540;border:none;color:#888;cursor:pointer;padding:6px 14px;border-radius:6px;font-size:13px}
+.back-btn:hover{background:#333355;color:#fff}
+.header h1{font-size:18px;color:#fff;font-weight:bold}
+.stats{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.scard{flex:1;min-width:120px;background:#1a1a2e;border-radius:10px;padding:12px 8px;border:1px solid #2a2a3e;text-align:center}
+.scard .sval{font-size:18px;font-weight:bold;margin-bottom:3px}
+.scard .sval.red{color:#ff4d4d}
+.scard .sval.yellow{color:#ffea00}
+.scard .sval.green{color:#3dcca5}
+.scard .slabel{font-size:10px;color:#666}
+.section{margin-bottom:28px}
+.section h2{font-size:14px;color:#555;margin-bottom:10px;padding-left:4px}
+.section img{width:100%;border-radius:8px;background:#111122;display:block;border:1px solid #1e1e2e}
+.footer{padding:12px 0;text-align:center;font-size:11px;color:#444;border-top:1px solid #1e1e2e;margin-top:20px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <button class="back-btn" onclick="history.back()">← 返回</button>
+    <h1>微盘温度计</h1>
+  </div>
+
+  <div class="stats" id="stats">
+    <div class="scard"><div class="sval yellow" id="vScore">--</div><div class="slabel">综合温度</div></div>
+    <div class="scard"><div class="sval" id="vIndex">--</div><div class="slabel">等权指数</div></div>
+    <div class="scard"><div class="sval" id="vCap">--</div><div class="slabel">市值中位数(亿)</div></div>
+    <div class="scard"><div class="sval" id="vCrowding">--</div><div class="slabel">换手率拥挤度</div></div>
+  </div>
+
+  <div class="section">
+    <h2>综合温度 + 等权指数</h2>
+    <img src="/data/weipan_imgs/weipan_5_score.png?v=20260608" alt="综合温度">
+  </div>
+
+  <div class="section">
+    <h2>相对估值 + 等权指数</h2>
+    <img src="/data/weipan_imgs/weipan_2_relative.png?v=20260608" alt="相对估值">
+  </div>
+
+  <div class="section">
+    <h2>换手率拥挤度 + 等权指数</h2>
+    <img src="/data/weipan_imgs/weipan_3_crowding.png?v=20260608" alt="换手率拥挤度">
+  </div>
+
+  <div class="section">
+    <h2>成交额拥挤度 + 等权指数</h2>
+    <img src="/data/weipan_imgs/weipan_4_amount_crowding.png?v=20260608" alt="成交额拥挤度">
+  </div>
+
+  <div class="section">
+    <h2>市值中位数</h2>
+    <img src="/data/weipan_imgs/weipan_1_cap.png?v=20260608" alt="市值中位数">
+  </div>
+
+  <div class="section">
+    <h2>PE / PB 中位数</h2>
+    <img src="/data/weipan_imgs/weipan_6_pe_pb.png?v=20260608" alt="PE/PB">
+  </div>
+
+  <div class="section">
+    <h2>归母净利润增速中位数</h2>
+    <img src="/data/weipan_imgs/weipan_7_np_growth.png?v=20260608" alt="净利润增速">
+  </div>
+
+  <div class="footer">数据来源：Tushare · 每5个交易日更新 · 2018-01-02起</div>
+</div>
+
+<script>
+(function() {
+  // 从CSV读取最新值更新卡片
+  fetch('/data/weipan_metrics.csv?t=' + Date.now())
+    .then(function(r) { return r.ok ? r.text() : null; })
+    .then(function(txt) {
+      if (!txt) return;
+      var lines = txt.trim().split('\n');
+      var last = lines[lines.length - 1].split(',');
+      var headers = lines[0].split(',');
+      var row = {};
+      headers.forEach(function(h, i) { row[h.trim()] = last[i]; });
+
+      // 综合温度
+      var scoreEl = document.getElementById('vScore');
+      var score = parseFloat(row['score']);
+      if (!isNaN(score)) {
+        scoreEl.textContent = (score * 100).toFixed(1) + '%';
+        if (score >= 0.8) scoreEl.style.color = '#ff4d4d';
+        else if (score >= 0.5) scoreEl.style.color = '#ffea00';
+        else scoreEl.style.color = '#3dcca5';
+      }
+
+      // 等权指数
+      var idxEl = document.getElementById('vIndex');
+      var idx = parseFloat(row['micro_index']);
+      idxEl.textContent = isNaN(idx) ? '--' : idx.toFixed(0);
+      idxEl.style.color = '#ff6655';
+
+      // 市值中位数
+      var capEl = document.getElementById('vCap');
+      var cap = parseFloat(row['micro_median']);
+      capEl.textContent = isNaN(cap) ? '--' : cap.toFixed(1);
+      capEl.style.color = '#ffea00';
+
+      // 换手率拥挤度
+      var crdEl = document.getElementById('vCrowding');
+      var crd = parseFloat(row['crowding_ratio']);
+      crdEl.textContent = isNaN(crd) ? '--' : crd.toFixed(3);
+      crdEl.style.color = '#4488ff';
+    })
+    .catch(function() {});
+})();
+</script>
+</body>
+</html>

@@ -2,6 +2,7 @@
 """生成通知文件 - 从today/result_*.txt读取"""
 from pathlib import Path
 import re
+import sys
 from datetime import date
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
