@@ -15,14 +15,14 @@ import requests
 
 
 CONFIG = {
-    "telegram_bot_token": "8803131343:AAGNIQUtFs5EhCxucMq7ez790NKbktMzMG4",
-    "telegram_chat_id": "8612207166",
-    "db_host": "douguastock.mysql.rds.aliyuncs.com",
+    "telegram_bot_token": "xxx",
+    "telegram_chat_id": "xxx",
+    "db_host": "xxx",
     "db_port": 3306,
-    "db_user": "gt888zx_4412",
-    "db_password": "gt888zx_4412",
-    "db_name": "gt888zx_4412",
-    "db_table": "stocks1",
+    "db_user": "xxx",
+    "db_password": "xxx",
+    "db_name": "xxx",
+    "db_table": "xxx",
     "poll_seconds": 2,
     "log_level": "INFO",
     "heartbeat_seconds": 60,
